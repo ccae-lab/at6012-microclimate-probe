@@ -245,6 +245,16 @@ document.getElementById("run").addEventListener("click", async function(){
   }catch(err){ status("Live run failed: "+err.message+". Is the backend running and CORS-enabled?","warn"); }
 });
 
+// ---- KPI values come from kpis.json (single editable source) ---------------
+fetch("kpis.json").then(function(r){ return r.ok ? r.json() : null; }).then(function(k){
+  if(!k) return;
+  Object.keys(k).forEach(function(c){
+    if(CASE[c] && k[c].metrics) CASE[c].metrics = k[c].metrics;
+    if(EO[c]   && k[c].eco)     EO[c].dist     = k[c].eco;
+  });
+  updateOverlay();  // refresh ecology readout with values from kpis.json
+}).catch(function(){ /* fall back to inline defaults */ });
+
 // init
 refreshRect();
 if(q.get("lat")) document.getElementById("preset").value="custom";
