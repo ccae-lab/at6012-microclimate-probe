@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Regenerative Microclimate Scorecard — Cork (Nano Nagle Place) | AT6012</title>
+<style>
+  :root { --ink:#1b2733; --muted:#5b6b7a; --line:#e3e8ee; --accent:#2e7d32; --good:#1e8449; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+         color:var(--ink); background:#f6f8fa; }
+  .wrap { max-width:1000px; margin:0 auto; padding:40px 24px 80px; }
+  header { border-bottom:3px solid var(--accent); padding-bottom:18px; margin-bottom:28px; }
+  h1 { font-size:29px; margin:0 0 6px; }
+  .sub { color:var(--muted); font-size:15px; }
+  .tag { display:inline-block; background:#eaf3ec; color:#2e6b34; border-radius:999px;
+         padding:2px 11px; font-size:12px; font-weight:600; margin-right:6px; }
+  figure { margin:26px 0; background:#fff; border:1px solid var(--line); border-radius:12px; padding:14px; }
+  figure img { width:100%; height:auto; border-radius:6px; display:block; }
+  figcaption { color:var(--muted); font-size:13px; margin-top:10px; text-align:center; }
+  h2 { font-size:20px; margin:36px 0 12px; }
+  table { width:100%; border-collapse:collapse; background:#fff; border:1px solid var(--line);
+          border-radius:12px; overflow:hidden; }
+  th,td { padding:11px 14px; text-align:left; border-bottom:1px solid var(--line); }
+  th { background:#eef4ef; font-size:13px; text-transform:uppercase; letter-spacing:.03em; color:#46604a; }
+  td.num { font-variant-numeric:tabular-nums; }
+  .good { color:var(--good); font-weight:600; }
+  .grid2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px; margin:18px 0; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px; }
+  .card .big { font-size:26px; font-weight:700; }
+  .card .lbl { color:var(--muted); font-size:13px; }
+  .note { background:#fff7e6; border:1px solid #f0d9a7; border-radius:10px; padding:14px 16px; font-size:14px; }
+  code { background:#eef1f4; padding:1px 6px; border-radius:5px; font-size:13px; }
+  .diagram { background:#fff; border:1px solid var(--line); border-radius:12px; padding:18px; margin:18px 0; }
+  .diagram svg { width:100%; height:auto; display:block; }
+  footer { margin-top:48px; padding-top:18px; border-top:1px solid var(--line);
+           color:var(--muted); font-size:13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Regenerative Microclimate Scorecard — Cork</h1>
+    <div class="sub">CCAE &middot; Nano Nagle Place, Douglas Street &middot; baseline vs. tree-canopy intervention</div>
+    <div style="margin-top:12px">
+      <span class="tag">AT6012</span>
+      <span class="tag">infrared.city SDK 0.4.9</span>
+      <span class="tag">UTCI &middot; Wind &middot; Solar</span>
+      <span class="tag">~800 m site</span>
+      <span class="tag">live API result</span>
+    </div>
+    <div style="margin-top:12px">
+      <a href="scorecard.html" style="margin-right:14px;color:#2e6b34;font-weight:600;font-size:14px">↔ Compare: Marseille (Vieux-Port)</a>
+      <a href="index.html" style="color:#2e6b34;font-weight:600;font-size:14px">← Learning module</a>
+    </div>
+  </header>
+
+  <p>A larger Cork City study area centred on <strong>Nano Nagle Place</strong> (home of the Cork
+  Centre for Architectural Education) on Douglas Street. The same workflow as the Marseille demo
+  runs three microclimate analyses over the block and compares a baseline against a tree-canopy
+  intervention.</p>
+
+  <h2>Workflow</h2>
+  <div class="diagram">
+    <svg viewBox="0 0 960 360" role="img" aria-label="infrared.city SDK scorecard workflow diagram">
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="#7a8a99"/>
+        </marker>
+        <style>
+          .box{fill:#fff;stroke:#c4d0db;stroke-width:1.5;rx:10}
+          .lab{font:600 13px -apple-system,Segoe UI,Roboto,sans-serif;fill:#1b2733}
+          .sub{font:11px -apple-system,Segoe UI,Roboto,sans-serif;fill:#5b6b7a}
+          .stg{font:700 11px -apple-system,Segoe UI,Roboto,sans-serif;fill:#2e7d32;letter-spacing:.06em}
+          .ln{stroke:#7a8a99;stroke-width:1.6;fill:none}
+          .acc{fill:#eaf3ec;stroke:#9cc7a2}
+        </style>
+      </defs>
+
+      <!-- Stage 1: Site -->
+      <text x="70" y="24" class="stg" text-anchor="middle">1 · SITE</text>
+      <rect class="box" x="10" y="38" width="120" height="64" rx="10"/>
+      <text x="70" y="64" class="lab" text-anchor="middle">GeoJSON</text>
+      <text x="70" y="82" class="sub" text-anchor="middle">polygon</text>
+      <text x="70" y="96" class="sub" text-anchor="middle">Nano Nagle</text>
+
+      <!-- Stage 2: Fetch layers -->
+      <text x="320" y="24" class="stg" text-anchor="middle">2 · FETCH LAYERS (SDK)</text>
+      <rect class="box" x="200" y="34" width="240" height="34" rx="8"/>
+      <text x="320" y="56" class="lab" text-anchor="middle">client.buildings.get_area()</text>
+      <rect class="box" x="200" y="76" width="240" height="34" rx="8"/>
+      <text x="320" y="98" class="lab" text-anchor="middle">client.weather.get_weather_file()</text>
+      <rect class="box acc" x="200" y="118" width="240" height="34" rx="8"/>
+      <text x="320" y="140" class="lab" text-anchor="middle">client.vegetation.get_area() · trees</text>
+
+      <!-- Stage 3: Run analyses -->
+      <text x="600" y="24" class="stg" text-anchor="middle">3 · run_area_and_wait()</text>
+      <rect class="box" x="500" y="38" width="200" height="30" rx="8"/>
+      <text x="600" y="58" class="lab" text-anchor="middle">UTCI · thermal comfort</text>
+      <rect class="box" x="500" y="76" width="200" height="30" rx="8"/>
+      <text x="600" y="96" class="lab" text-anchor="middle">Wind · wind-speed</text>
+      <rect class="box" x="500" y="114" width="200" height="30" rx="8"/>
+      <text x="600" y="134" class="lab" text-anchor="middle">Solar · direct-sun-hours</text>
+      <text x="600" y="166" class="sub" text-anchor="middle">× baseline &amp; intervention · tiled, polled, merged</text>
+
+      <!-- Stage 4: Grids -->
+      <text x="820" y="24" class="stg" text-anchor="middle">4 · RESULT</text>
+      <rect class="box" x="760" y="38" width="180" height="64" rx="10"/>
+      <text x="850" y="64" class="lab" text-anchor="middle">AreaResult</text>
+      <text x="850" y="82" class="sub" text-anchor="middle">.merged_grid</text>
+      <text x="850" y="96" class="sub" text-anchor="middle">(NumPy)</text>
+
+      <!-- Stage 5: Metrics + scorecard (bottom row) -->
+      <text x="480" y="226" class="stg" text-anchor="middle">5 · SCORE &amp; COMPARE</text>
+      <rect class="box" x="300" y="238" width="170" height="58" rx="10"/>
+      <text x="385" y="262" class="lab" text-anchor="middle">regenerative_metrics</text>
+      <text x="385" y="280" class="sub" text-anchor="middle">heat-stress % · TACI</text>
+      <rect class="box acc" x="510" y="238" width="170" height="58" rx="10"/>
+      <text x="595" y="262" class="lab" text-anchor="middle">Scorecard</text>
+      <text x="595" y="280" class="sub" text-anchor="middle">figure + Δ deltas</text>
+
+      <!-- connectors -->
+      <path class="ln" d="M130 70 H196" marker-end="url(#arr)"/>
+      <path class="ln" d="M440 90 H496" marker-end="url(#arr)"/>
+      <path class="ln" d="M700 90 H756" marker-end="url(#arr)"/>
+      <path class="ln" d="M850 102 V200 H385 V234" marker-end="url(#arr)"/>
+      <path class="ln" d="M470 267 H506" marker-end="url(#arr)"/>
+    </svg>
+  </div>
+
+  <div class="grid2">
+    <div class="card"><div class="big">4,608</div><div class="lbl">buildings (context geometry)</div></div>
+    <div class="card"><div class="big">2,787</div><div class="lbl">trees (intervention layer)</div></div>
+    <div class="card"><div class="big">~800 m</div><div class="lbl">study area (≈24 tiles/scenario)</div></div>
+  </div>
+
+  <figure>
+    <img src="scorecard_cork.png" alt="Cork microclimate scorecard: baseline vs intervention across UTCI, wind, and solar" />
+    <figcaption>Rows: baseline (buildings only) vs. intervention (+ tree canopy).
+      Columns: UTCI thermal comfort, wind speed, direct sun hours — Nano Nagle Place, Cork.</figcaption>
+  </figure>
+
+  <h2>Thermal comfort (UTCI)</h2>
+  <table>
+    <thead><tr><th>Metric</th><th>Baseline</th><th>+ Trees</th><th>Change</th></tr></thead>
+    <tbody id="results">
+      <tr><td>Mean UTCI</td><td class="num">15.6&deg;C</td><td class="num">15.2&deg;C</td><td class="num good">&minus;0.4&deg;C cooler</td></tr>
+      <tr><td>Comfortable area (9&ndash;26&deg;C)</td><td class="num">100%</td><td class="num">100%</td><td class="num">no change</td></tr>
+      <tr><td>Heat-stress area (UTCI&gt;26&deg;C)</td><td class="num">0%</td><td class="num">0%</td><td class="num">0 (mild climate)</td></tr>
+      <tr><td>Thermal-zone diversity (Shannon)</td><td class="num">1.18</td><td class="num">1.27</td><td class="num good">+7.6%</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:14px">Cork's maritime climate is already fully comfortable in the August window, so there is
+  <strong>no heat stress to relieve</strong> — the regenerative signal shows up elsewhere: adding the
+  2,787-tree canopy <strong>cools mean UTCI by 0.4&nbsp;&deg;C</strong> and <strong>raises thermal-zone
+  diversity (+7.6%)</strong>, creating more varied microclimate niches. Wind speed was unchanged by the
+  canopy at this resolution, and the canopy shaded enough cells to lower direct-sun-hours coverage — a
+  visible shading effect rather than a comfort one. This is the instructive contrast with Marseille,
+  where the same workflow targets heat-stress reduction.</p>
+
+  <h2>Method</h2>
+  <p>One <code>run_area_and_wait()</code> call per analysis over the Cork polygon. Buildings and weather
+  are injected for all runs (thermal-comfort requires geometry); vegetation is injected only for the
+  intervention. Outputs are merged NumPy grids scored by <code>regenerative_metrics.py</code>
+  (UTCI bands, heat-stress %, Alberti assembly index). Weather is drawn from the nearest EPW station to Cork.</p>
+
+  <div class="note">
+    <strong>Note.</strong> Cork's maritime climate is far milder than Marseille, so expect lower absolute
+    heat-stress; the regenerative signal is the <em>direction and magnitude of change</em> when canopy is added.
+  </div>
+
+  <footer>
+    Generated by the infrared.city SDK Buildathon workflow &middot;
+    AT6012 Design Research, CCAE / UCC School of Architecture &middot;
+    SDK 0.4.9 submit-and-run.
+  </footer>
+</div>
+  <script src="chrome.js" defer></script>
+</body>
+</html>

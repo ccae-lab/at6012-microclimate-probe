@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+*.py[cod]
+.env
+.env.*
+*.log
+.DS_Store
+output/_ovl_tmp.png

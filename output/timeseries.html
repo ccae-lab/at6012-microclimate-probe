@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Diurnal Microclimate Time Series — Marseille | AT6012</title>
+<style>
+  :root { --ink:#1b2733; --muted:#5b6b7a; --line:#e3e8ee; --accent:#e67e22; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+         color:var(--ink); background:#f6f8fa; }
+  .wrap { max-width:1000px; margin:0 auto; padding:40px 24px 80px; }
+  header { border-bottom:3px solid var(--accent); padding-bottom:18px; margin-bottom:28px; }
+  h1 { font-size:28px; margin:0 0 6px; }
+  .sub { color:var(--muted); font-size:15px; }
+  .tag { display:inline-block; background:#fdf0e3; color:#a85b18; border-radius:999px;
+         padding:2px 11px; font-size:12px; font-weight:600; margin-right:6px; }
+  .links a { display:inline-block; margin-right:14px; color:#a85b18; font-weight:600; font-size:14px; }
+  figure { margin:26px 0; background:#fff; border:1px solid var(--line); border-radius:12px; padding:14px; }
+  figure img { width:100%; height:auto; border-radius:6px; display:block; }
+  figcaption { color:var(--muted); font-size:13px; margin-top:10px; text-align:center; }
+  h2 { font-size:20px; margin:34px 0 12px; }
+  table { width:100%; border-collapse:collapse; background:#fff; border:1px solid var(--line);
+          border-radius:12px; overflow:hidden; }
+  th,td { padding:10px 14px; text-align:left; border-bottom:1px solid var(--line); }
+  th { background:#fdf1e5; font-size:13px; text-transform:uppercase; letter-spacing:.03em; color:#8a5018; }
+  td.num { font-variant-numeric:tabular-nums; }
+  code { background:#eef1f4; padding:1px 6px; border-radius:5px; font-size:13px; }
+  .note { background:#fff7e6; border:1px solid #f0d9a7; border-radius:10px; padding:14px 16px; font-size:14px; margin-top:16px; }
+  footer { margin-top:48px; padding-top:18px; border-top:1px solid var(--line); color:var(--muted); font-size:13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Diurnal Microclimate Time Series — Marseille</h1>
+    <div class="sub">Vieux-Port &middot; UTCI sampled across a representative summer day</div>
+    <div style="margin-top:12px">
+      <span class="tag">AT6012</span>
+      <span class="tag">infrared.city SDK 0.4.9</span>
+      <span class="tag">temporal</span>
+      <span class="tag">live API result</span>
+    </div>
+    <div class="links" style="margin-top:12px">
+      <a href="scorecard.html">← Marseille scorecard</a>
+      <a href="scorecard_cork.html">Cork scorecard</a>
+      <a href="index.html">Learning module</a>
+    </div>
+  </header>
+
+  <p>An area analysis returns one spatial grid aggregated over a time window, so a <em>temporal</em> series is
+  built by running the same site across several windows. Here UTCI is sampled at six hours of an August day on a
+  compact single-tile site, tracking how thermal comfort evolves against the driving air temperature.</p>
+
+  <figure>
+    <img src="timeseries_marseille.png" alt="Diurnal UTCI vs air temperature with heat-stress area, Marseille" />
+    <figcaption>Mean UTCI (red) and air temperature (grey) through the day; bars show heat-stress area (%).</figcaption>
+  </figure>
+
+  <h2>Hourly results</h2>
+  <table>
+    <thead><tr><th>Hour</th><th>Air temp</th><th>Mean UTCI</th><th>Heat-stress area</th></tr></thead>
+    <tbody>
+      <tr><td>06:00</td><td class="num">19.5&deg;C</td><td class="num">26.9&deg;C</td><td class="num">70.0%</td></tr>
+      <tr><td>09:00</td><td class="num">25.6&deg;C</td><td class="num">32.7&deg;C</td><td class="num">93.2%</td></tr>
+      <tr><td>12:00</td><td class="num">30.0&deg;C</td><td class="num">33.2&deg;C</td><td class="num">98.4%</td></tr>
+      <tr><td>15:00</td><td class="num">28.3&deg;C</td><td class="num">26.9&deg;C</td><td class="num">90.3%</td></tr>
+      <tr><td>18:00</td><td class="num">25.4&deg;C</td><td class="num">17.8&deg;C</td><td class="num">0.0%</td></tr>
+      <tr><td>21:00</td><td class="num">22.7&deg;C</td><td class="num">— (night)</td><td class="num">0.0%</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:12px">Peak mean UTCI <strong>33.2&nbsp;&deg;C at 12:00</strong> (98% of the block in heat stress);
+  diurnal UTCI amplitude <strong>15.4&nbsp;&deg;C</strong>. UTCI exceeds air temperature through midday — the radiant
+  load on hard surfaces — then falls below it by evening.</p>
+
+  <div class="note">
+    <strong>Edge case (kept honest).</strong> The 21:00 window returns no UTCI grid: with no solar load the
+    daytime radiant-comfort analysis yields an empty grid, so mean UTCI is undefined at night. Nighttime comfort
+    needs a different treatment than this daytime sweep.
+  </div>
+
+  <h2>How it runs</h2>
+  <p>One <code>run_area_and_wait()</code> UTCI job per hour on a single tile, each with the matching hourly weather
+  slice from <code>client.weather.filter_weather_data()</code>. See <code>time_series.py</code>:
+  <code>python time_series.py --run --site marseille --hours 6,9,12,15,18,21</code>.</p>
+
+  <footer>
+    Generated by the infrared.city SDK Buildathon workflow &middot;
+    AT6012 Design Research, CCAE / UCC School of Architecture &middot; SDK 0.4.9.
+  </footer>
+</div>
+  <script src="chrome.js" defer></script>
+</body>
+</html>

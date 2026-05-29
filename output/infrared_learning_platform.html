@@ -1,0 +1,2243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Interactive learning platform for regenerative thermal analysis using infrared.city - AT6012 Design Research">
+    <title>Infrared.City Learning Platform | AT6012 Regenerative Design</title>
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
+    
+    <style>
+        /* ===================================================================
+           DESIGN SYSTEM - REGENERATIVE DESIGN PRINCIPLES
+           =================================================================== */
+        :root {
+            /* Color Palette - Inspired by natural thermal gradients */
+            --thermal-cold: #4575b4;
+            --thermal-cool: #74add1;
+            --thermal-comfort: #fee090;
+            --thermal-warm: #f46d43;
+            --thermal-hot: #d73027;
+            
+            /* Brand Colors */
+            --primary: #2c5f2d;        /* Forest green - regenerative growth */
+            --secondary: #ff6b35;      /* Warm accent - thermal energy */
+            --accent: #00b4d8;         /* Cool accent - water/cooling */
+            --dark: #1a1a2e;           /* Deep background */
+            --light: #f8f9fa;          /* Clean white */
+            
+            /* Functional Colors */
+            --success: #06d6a0;
+            --warning: #ffd60a;
+            --danger: #ef476f;
+            --info: #4361ee;
+            
+            /* Typography */
+            --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+            
+            /* Spacing Scale (8px base) */
+            --space-xs: 0.5rem;
+            --space-sm: 1rem;
+            --space-md: 1.5rem;
+            --space-lg: 2rem;
+            --space-xl: 3rem;
+            --space-xxl: 4rem;
+            
+            /* Shadows for depth */
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.12);
+            --shadow-lg: 0 8px 32px rgba(0,0,0,0.16);
+            
+            /* Border Radius */
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-full: 9999px;
+            
+            /* Transitions */
+            --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* ===================================================================
+           BASE STYLES & RESET
+           =================================================================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        body {
+            font-family: var(--font-primary);
+            font-size: 16px;
+            line-height: 1.6;
+            color: var(--dark);
+            background: var(--light);
+            overflow-x: hidden;
+        }
+        
+        /* ===================================================================
+           NAVIGATION - MOBILE-FIRST PERSISTENT HEADER
+           =================================================================== */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            box-shadow: var(--shadow-sm);
+            padding: var(--space-sm) var(--space-md);
+            transition: transform var(--transition-base);
+        }
+        
+        .navbar.hidden {
+            transform: translateY(-100%);
+        }
+        
+        .navbar-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            text-decoration: none;
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+        
+        .navbar-brand i {
+            font-size: 1.5rem;
+            color: var(--secondary);
+        }
+        
+        .navbar-menu {
+            display: none;
+            gap: var(--space-md);
+            list-style: none;
+        }
+        
+        .navbar-menu a {
+            text-decoration: none;
+            color: var(--dark);
+            font-weight: 500;
+            transition: color var(--transition-fast);
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+        }
+        
+        .navbar-menu a:hover {
+            color: var(--primary);
+        }
+        
+        .navbar-toggle {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: var(--space-xs);
+        }
+        
+        .navbar-toggle span {
+            width: 24px;
+            height: 2px;
+            background: var(--dark);
+            transition: all var(--transition-fast);
+        }
+        
+        .navbar-toggle.active span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+        
+        .navbar-toggle.active span:nth-child(2) {
+            opacity: 0;
+        }
+        
+        .navbar-toggle.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -6px);
+        }
+        
+        /* Mobile Menu Overlay */
+        .mobile-menu {
+            position: fixed;
+            top: 73px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(16px);
+            transform: translateX(100%);
+            transition: transform var(--transition-base);
+            z-index: 999;
+            overflow-y: auto;
+            padding: var(--space-xl) var(--space-md);
+        }
+        
+        .mobile-menu.active {
+            transform: translateX(0);
+        }
+        
+        .mobile-menu-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-md);
+        }
+        
+        .mobile-menu-list a {
+            text-decoration: none;
+            color: var(--dark);
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: var(--space-sm);
+            border-radius: var(--radius-sm);
+            transition: all var(--transition-fast);
+        }
+        
+        .mobile-menu-list a:hover {
+            background: var(--primary);
+            color: white;
+        }
+        
+        /* Desktop Menu */
+        @media (min-width: 768px) {
+            .navbar-menu {
+                display: flex;
+            }
+            
+            .navbar-toggle {
+                display: none;
+            }
+            
+            .mobile-menu {
+                display: none;
+            }
+        }
+        
+        /* ===================================================================
+           HERO SECTION - ENGAGING ENTRY POINT
+           =================================================================== */
+        .hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary) 0%, #1a4d2e 100%);
+            color: white;
+            padding: calc(73px + var(--space-xl)) var(--space-md) var(--space-xl);
+            overflow: hidden;
+        }
+        
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse"><path d="M 100 0 L 0 0 0 100" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)" /></svg>');
+            opacity: 0.5;
+        }
+        
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            max-width: 800px;
+            text-align: center;
+        }
+        
+        .hero-title {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: var(--space-md);
+            background: linear-gradient(135deg, #ffffff 0%, #a8dadc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .hero-subtitle {
+            font-size: clamp(1rem, 2.5vw, 1.25rem);
+            margin-bottom: var(--space-xl);
+            opacity: 0.9;
+            font-weight: 400;
+        }
+        
+        .hero-cta {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-md);
+            align-items: center;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+            padding: var(--space-sm) var(--space-lg);
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            text-decoration: none;
+            transition: all var(--transition-base);
+            cursor: pointer;
+            border: 2px solid transparent;
+            font-size: 1rem;
+        }
+        
+        .btn-primary {
+            background: white;
+            color: var(--primary);
+        }
+        
+        .btn-primary:hover {
+            background: var(--secondary);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: white;
+            border-color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: white;
+            color: var(--primary);
+        }
+        
+        @media (min-width: 768px) {
+            .hero-cta {
+                flex-direction: row;
+                justify-content: center;
+            }
+        }
+        
+        /* ===================================================================
+           WORKFLOW STEPS - PROGRESSIVE LEARNING PATH
+           =================================================================== */
+        .workflow-section {
+            padding: var(--space-xxl) var(--space-md);
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .section-header {
+            text-align: center;
+            margin-bottom: var(--space-xxl);
+        }
+        
+        .section-title {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: var(--space-sm);
+        }
+        
+        .section-subtitle {
+            font-size: clamp(1rem, 2vw, 1.25rem);
+            color: #666;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .workflow-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--space-xl);
+        }
+        
+        @media (min-width: 768px) {
+            .workflow-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (min-width: 1200px) {
+            .workflow-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        .workflow-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+            box-shadow: var(--shadow-md);
+            transition: all var(--transition-base);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .workflow-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform var(--transition-slow);
+        }
+        
+        .workflow-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .workflow-card:hover::before {
+            transform: scaleX(1);
+        }
+        
+        .workflow-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            border-radius: var(--radius-full);
+            font-weight: 700;
+            font-size: 1.5rem;
+            margin-bottom: var(--space-md);
+        }
+        
+        .workflow-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: var(--space-sm);
+        }
+        
+        .workflow-description {
+            color: #666;
+            margin-bottom: var(--space-md);
+            line-height: 1.7;
+        }
+        
+        .workflow-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-xs);
+            margin-bottom: var(--space-md);
+        }
+        
+        .tag {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: rgba(44, 95, 45, 0.1);
+            color: var(--primary);
+            border-radius: var(--radius-full);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .workflow-action {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+            color: var(--primary);
+            font-weight: 600;
+            text-decoration: none;
+            transition: all var(--transition-fast);
+        }
+        
+        .workflow-action:hover {
+            gap: var(--space-sm);
+            color: var(--secondary);
+        }
+        
+        /* ===================================================================
+           INTERACTIVE CODE DEMO - SYNTAX HIGHLIGHTED
+           =================================================================== */
+        .code-demo-section {
+            background: var(--dark);
+            color: white;
+            padding: var(--space-xxl) var(--space-md);
+        }
+        
+        .code-demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .code-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 0;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .code-tab {
+            padding: var(--space-sm) var(--space-md);
+            background: rgba(255,255,255,0.05);
+            color: rgba(255,255,255,0.6);
+            border: none;
+            cursor: pointer;
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all var(--transition-fast);
+            white-space: nowrap;
+        }
+        
+        .code-tab.active {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border-bottom: 2px solid var(--accent);
+        }
+        
+        .code-content {
+            background: #0d1117;
+            border-radius: 0 var(--radius-md) var(--radius-md) var(--radius-md);
+            overflow: hidden;
+        }
+        
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-sm) var(--space-md);
+            background: rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .code-filename {
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            color: rgba(255,255,255,0.7);
+        }
+        
+        .code-copy {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+            padding: 0.375rem 0.75rem;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        
+        .code-copy:hover {
+            background: var(--accent);
+        }
+        
+        .code-copy.copied {
+            background: var(--success);
+        }
+        
+        pre {
+            margin: 0;
+            padding: var(--space-md);
+            overflow-x: auto;
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+        
+        code {
+            font-family: var(--font-mono);
+        }
+        
+        /* Syntax Highlighting */
+        .token-comment { color: #7f848e; font-style: italic; }
+        .token-keyword { color: #ff7b72; }
+        .token-string { color: #a5d6ff; }
+        .token-function { color: #d2a8ff; }
+        .token-number { color: #79c0ff; }
+        .token-operator { color: #ff7b72; }
+        .token-class { color: #ffa657; }
+        .token-variable { color: #ffa657; }
+        
+        /* ===================================================================
+           LEARNING MODULES - ACCORDION-BASED CONTENT
+           =================================================================== */
+        .modules-section {
+            background: var(--light);
+            padding: var(--space-xxl) var(--space-md);
+        }
+        
+        .modules-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .module-accordion {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-md);
+        }
+        
+        .module-item {
+            background: white;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+            transition: all var(--transition-base);
+        }
+        
+        .module-item.active {
+            box-shadow: var(--shadow-md);
+        }
+        
+        .module-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-md);
+            cursor: pointer;
+            transition: background var(--transition-fast);
+        }
+        
+        .module-header:hover {
+            background: rgba(44, 95, 45, 0.05);
+        }
+        
+        .module-header-content {
+            flex: 1;
+        }
+        
+        .module-number {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-bottom: var(--space-xs);
+        }
+        
+        .module-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 0.25rem;
+        }
+        
+        .module-meta {
+            display: flex;
+            gap: var(--space-md);
+            font-size: 0.875rem;
+            color: #666;
+        }
+        
+        .module-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .module-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: rgba(44, 95, 45, 0.1);
+            border-radius: var(--radius-full);
+            transition: all var(--transition-fast);
+        }
+        
+        .module-toggle i {
+            transition: transform var(--transition-base);
+        }
+        
+        .module-item.active .module-toggle i {
+            transform: rotate(180deg);
+        }
+        
+        .module-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height var(--transition-slow);
+        }
+        
+        .module-content.active {
+            max-height: 2000px;
+        }
+        
+        .module-body {
+            padding: 0 var(--space-md) var(--space-md) var(--space-md);
+        }
+        
+        .module-description {
+            color: #666;
+            line-height: 1.7;
+            margin-bottom: var(--space-md);
+        }
+        
+        .learning-objectives {
+            background: rgba(6, 214, 160, 0.1);
+            border-left: 4px solid var(--success);
+            padding: var(--space-md);
+            border-radius: var(--radius-sm);
+            margin-bottom: var(--space-md);
+        }
+        
+        .learning-objectives h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: var(--space-sm);
+        }
+        
+        .learning-objectives ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .learning-objectives li {
+            display: flex;
+            align-items: start;
+            gap: var(--space-xs);
+            margin-bottom: 0.5rem;
+            color: #666;
+        }
+        
+        .learning-objectives li::before {
+            content: '✓';
+            color: var(--success);
+            font-weight: 700;
+        }
+        
+        .module-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-sm);
+        }
+        
+        .btn-module {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+            padding: 0.5rem 1rem;
+            background: var(--primary);
+            color: white;
+            border-radius: var(--radius-sm);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: all var(--transition-fast);
+        }
+        
+        .btn-module:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+        
+        .btn-module.secondary {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+        
+        .btn-module.secondary:hover {
+            background: var(--primary);
+            color: white;
+        }
+        
+        /* ===================================================================
+           THERMAL METRICS VISUALIZATION
+           =================================================================== */
+        .metrics-section {
+            background: white;
+            padding: var(--space-xxl) var(--space-md);
+        }
+        
+        .metrics-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .thermal-scale {
+            background: linear-gradient(90deg, 
+                var(--thermal-cold) 0%,
+                var(--thermal-cool) 25%,
+                var(--thermal-comfort) 50%,
+                var(--thermal-warm) 75%,
+                var(--thermal-hot) 100%
+            );
+            height: 60px;
+            border-radius: var(--radius-md);
+            position: relative;
+            margin: var(--space-xl) 0;
+            box-shadow: var(--shadow-md);
+        }
+        
+        .thermal-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: var(--space-sm);
+            font-size: 0.875rem;
+            color: #666;
+            font-weight: 600;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--space-md);
+            margin-top: var(--space-xl);
+        }
+        
+        @media (min-width: 768px) {
+            .metrics-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            padding: var(--space-md);
+            border-radius: var(--radius-md);
+            border: 2px solid transparent;
+            transition: all var(--transition-base);
+        }
+        
+        .metric-card:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .metric-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: var(--space-sm);
+        }
+        
+        .metric-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--dark);
+            line-height: 1;
+        }
+        
+        .metric-description {
+            font-size: 0.875rem;
+            color: #666;
+            margin-top: 0.5rem;
+        }
+        
+        /* ===================================================================
+           QGIS INTEGRATION GUIDE
+           =================================================================== */
+        .qgis-section {
+            background: var(--light);
+            padding: var(--space-xxl) var(--space-md);
+        }
+        
+        .qgis-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .qgis-steps {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-lg);
+            margin-top: var(--space-xl);
+        }
+        
+        .qgis-step {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-md);
+            background: white;
+            padding: var(--space-lg);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        @media (min-width: 768px) {
+            .qgis-step {
+                flex-direction: row;
+            }
+        }
+        
+        .qgis-step-number {
+            flex-shrink: 0;
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            border-radius: var(--radius-full);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            font-weight: 800;
+        }
+        
+        .qgis-step-content {
+            flex: 1;
+        }
+        
+        .qgis-step-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: var(--space-xs);
+        }
+        
+        .qgis-step-description {
+            color: #666;
+            line-height: 1.7;
+            margin-bottom: var(--space-sm);
+        }
+        
+        .qgis-command {
+            background: #0d1117;
+            color: #a5d6ff;
+            padding: var(--space-sm);
+            border-radius: var(--radius-sm);
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            overflow-x: auto;
+        }
+        
+        /* ===================================================================
+           FOOTER
+           =================================================================== */
+        .footer {
+            background: var(--dark);
+            color: rgba(255,255,255,0.7);
+            padding: var(--space-xxl) var(--space-md) var(--space-lg);
+        }
+        
+        .footer-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--space-xl);
+            margin-bottom: var(--space-xl);
+        }
+        
+        @media (min-width: 768px) {
+            .footer-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        .footer-section h3 {
+            color: white;
+            font-size: 1.125rem;
+            font-weight: 700;
+            margin-bottom: var(--space-md);
+        }
+        
+        .footer-links {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-sm);
+        }
+        
+        .footer-links a {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            transition: color var(--transition-fast);
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+        }
+        
+        .footer-links a:hover {
+            color: var(--accent);
+        }
+        
+        .footer-bottom {
+            padding-top: var(--space-lg);
+            border-top: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+            font-size: 0.875rem;
+        }
+        
+        /* ===================================================================
+           FLOATING ACTION BUTTON - MOBILE QUICK ACCESS
+           =================================================================== */
+        .fab {
+            position: fixed;
+            bottom: var(--space-lg);
+            right: var(--space-md);
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--secondary), var(--danger));
+            color: white;
+            border-radius: var(--radius-full);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: var(--shadow-lg);
+            cursor: pointer;
+            z-index: 900;
+            transition: all var(--transition-base);
+        }
+        
+        .fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 32px rgba(255, 107, 53, 0.4);
+        }
+        
+        /* ===================================================================
+           PROGRESS INDICATOR
+           =================================================================== */
+        .progress-bar {
+            position: fixed;
+            top: 73px;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: rgba(0, 180, 216, 0.2);
+            z-index: 999;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--primary));
+            width: 0%;
+            transition: width 100ms linear;
+        }
+        
+        /* ===================================================================
+           UTILITY CLASSES
+           =================================================================== */
+        .text-center { text-align: center; }
+        .text-primary { color: var(--primary); }
+        .text-secondary { color: var(--secondary); }
+        .mt-lg { margin-top: var(--space-lg); }
+        .mb-lg { margin-bottom: var(--space-lg); }
+        
+        /* Hidden on mobile */
+        .mobile-hidden {
+            display: none;
+        }
+        
+        @media (min-width: 768px) {
+            .mobile-hidden {
+                display: block;
+            }
+        }
+        
+        /* Loading Animation */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .loading {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+<body>
+    <!-- Progress Bar -->
+    <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+    </div>
+    
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="navbar-container">
+            <a href="#" class="navbar-brand">
+                <i class="bi bi-thermometer-sun"></i>
+                <span>Infrared.City Learning</span>
+            </a>
+            
+            <ul class="navbar-menu">
+                <li><a href="#workflow"><i class="bi bi-diagram-3"></i> Workflow</a></li>
+                <li><a href="#code"><i class="bi bi-code-slash"></i> Code</a></li>
+                <li><a href="#modules"><i class="bi bi-book"></i> Modules</a></li>
+                <li><a href="#module-7" style="color:#27ae60"><i class="bi bi-stars"></i> SDK 0.4.9</a></li>
+                <li><a href="#metrics"><i class="bi bi-graph-up"></i> Metrics</a></li>
+                <li><a href="#qgis"><i class="bi bi-map"></i> QGIS</a></li>
+            </ul>
+            
+            <button class="navbar-toggle" id="navToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+    
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu" id="mobileMenu">
+        <ul class="mobile-menu-list">
+            <li><a href="#workflow" onclick="closeMobileMenu()"><i class="bi bi-diagram-3"></i> Workflow</a></li>
+            <li><a href="#code" onclick="closeMobileMenu()"><i class="bi bi-code-slash"></i> Code Examples</a></li>
+            <li><a href="#modules" onclick="closeMobileMenu()"><i class="bi bi-book"></i> Learning Modules</a></li>
+            <li><a href="#module-7" onclick="closeMobileMenu()"><i class="bi bi-stars"></i> SDK 0.4.9 (New)</a></li>
+            <li><a href="#metrics" onclick="closeMobileMenu()"><i class="bi bi-graph-up"></i> Thermal Metrics</a></li>
+            <li><a href="#qgis" onclick="closeMobileMenu()"><i class="bi bi-map"></i> QGIS Integration</a></li>
+        </ul>
+    </div>
+    
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="hero-content" data-aos="fade-up">
+            <h1 class="hero-title">Regenerative Thermal Analysis with infrared.city</h1>
+            <p class="hero-subtitle">
+                Learn to analyze urban thermal environments through computational workflows,
+                applying assembly theory and regenerative design frameworks.
+            </p>
+            <div class="hero-cta">
+                <a href="#workflow" class="btn btn-primary">
+                    <i class="bi bi-play-circle"></i>
+                    Start Learning
+                </a>
+                <a href="#" class="btn btn-secondary" onclick="downloadToolkit(); return false;">
+                    <i class="bi bi-download"></i>
+                    Download Toolkit
+                </a>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Workflow Steps Section -->
+    <section class="workflow-section" id="workflow">
+        <div class="section-header" data-aos="fade-up">
+            <h2 class="section-title">Complete Learning Workflow</h2>
+            <p class="section-subtitle">
+                A progressive path from API basics to regenerative design assessment
+            </p>
+        </div>
+        
+        <div class="workflow-grid">
+            <!-- Step 1 -->
+            <div class="workflow-card" data-aos="fade-up" data-aos-delay="100">
+                <div class="workflow-number">1</div>
+                <h3 class="workflow-title">Setup & Authentication</h3>
+                <p class="workflow-description">
+                    Learn secure API credential management and connection validation.
+                    Understand environment variables, configuration files, and authentication patterns.
+                </p>
+                <div class="workflow-tags">
+                    <span class="tag">15 min</span>
+                    <span class="tag">Beginner</span>
+                    <span class="tag">Python</span>
+                </div>
+                <a href="#module-1" class="workflow-action" onclick="openModule(1)">
+                    Start Module <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            
+            <!-- Step 2 -->
+            <div class="workflow-card" data-aos="fade-up" data-aos-delay="200">
+                <div class="workflow-number">2</div>
+                <h3 class="workflow-title">Data Retrieval & Processing</h3>
+                <p class="workflow-description">
+                    Extract thermal simulation data from infrared.city API.
+                    Parse JSON responses, convert to DataFrames, validate data structures.
+                </p>
+                <div class="workflow-tags">
+                    <span class="tag">30 min</span>
+                    <span class="tag">Intermediate</span>
+                    <span class="tag">Pandas</span>
+                </div>
+                <a href="#module-2" class="workflow-action" onclick="openModule(2)">
+                    Start Module <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            
+            <!-- Step 3 -->
+            <div class="workflow-card" data-aos="fade-up" data-aos-delay="300">
+                <div class="workflow-number">3</div>
+                <h3 class="workflow-title">UTCI Analysis</h3>
+                <p class="workflow-description">
+                    Calculate Universal Thermal Climate Index statistics.
+                    Understand thermal stress categories, comfort thresholds, and heat vulnerability.
+                </p>
+                <div class="workflow-tags">
+                    <span class="tag">25 min</span>
+                    <span class="tag">Intermediate</span>
+                    <span class="tag">NumPy</span>
+                </div>
+                <a href="#module-3" class="workflow-action" onclick="openModule(3)">
+                    Start Module <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            
+            <!-- Step 4 -->
+            <div class="workflow-card" data-aos="fade-up" data-aos-delay="100">
+                <div class="workflow-number">4</div>
+                <h3 class="workflow-title">Assembly Complexity</h3>
+                <p class="workflow-description">
+                    Operationalize Alberti's planetary urbanism framework.
+                    Calculate thermal assembly index, microclimate diversity, spatial complexity.
+                </p>
+                <div class="workflow-tags">
+                    <span class="tag">40 min</span>
+                    <span class="tag">Advanced</span>
+                    <span class="tag">Theory</span>
+                </div>
+                <a href="#module-4" class="workflow-action" onclick="openModule(4)">
+                    Start Module <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            
+            <!-- Step 5 -->
+            <div class="workflow-card" data-aos="fade-up" data-aos-delay="200">
+                <div class="workflow-number">5</div>
+                <h3 class="workflow-title">QGIS Integration</h3>
+                <p class="workflow-description">
+                    Export georeferenced thermal maps for spatial analysis.
+                    Create GeoTIFFs, GeoJSON vectors, and styled layer files for QGIS.
+                </p>
+                <div class="workflow-tags">
+                    <span class="tag">35 min</span>
+                    <span class="tag">Intermediate</span>
+                    <span class="tag">GIS</span>
+                </div>
+                <a href="#module-5" class="workflow-action" onclick="openModule(5)">
+                    Start Module <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            
+            <!-- Step 6 -->
+            <div class="workflow-card" data-aos="fade-up" data-aos-delay="300">
+                <div class="workflow-number">6</div>
+                <h3 class="workflow-title">Scenario Comparison</h3>
+                <p class="workflow-description">
+                    Compare baseline vs. intervention scenarios.
+                    Calculate regenerative metric improvements, visualize performance differences.
+                </p>
+                <div class="workflow-tags">
+                    <span class="tag">45 min</span>
+                    <span class="tag">Advanced</span>
+                    <span class="tag">Design</span>
+                </div>
+                <a href="#module-6" class="workflow-action" onclick="openModule(6)">
+                    Start Module <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Interactive Code Demo Section -->
+    <section class="code-demo-section" id="code">
+        <div class="code-demo-container">
+            <div class="section-header" data-aos="fade-up">
+                <h2 class="section-title" style="color: white;">Interactive Code Examples</h2>
+                <p class="section-subtitle" style="color: rgba(255,255,255,0.7);">
+                    Run these examples in your Python environment to start analyzing thermal data
+                </p>
+            </div>
+            
+            <div data-aos="fade-up" data-aos-delay="100">
+                <div class="code-tabs">
+                    <button class="code-tab active" onclick="switchCodeTab(0)">Quick Start</button>
+                    <button class="code-tab" onclick="switchCodeTab(1)">Basic Analysis</button>
+                    <button class="code-tab" onclick="switchCodeTab(2)">Assembly Metrics</button>
+                    <button class="code-tab" onclick="switchCodeTab(3)">QGIS Export</button>
+                </div>
+                
+                <div class="code-content">
+                    <!-- Tab 0: Quick Start -->
+                    <div class="code-panel active" id="codePanel0">
+                        <div class="code-header">
+                            <span class="code-filename">quick_start.py</span>
+                            <button class="code-copy" onclick="copyCode(0)">
+                                <i class="bi bi-clipboard"></i>
+                                <span>Copy</span>
+                            </button>
+                        </div>
+                        <pre><code class="token-comment"># Install dependencies first:
+# pip install requests numpy pandas geopandas rasterio matplotlib
+
+</code><code class="token-keyword">from</code> infrared_config <code class="token-keyword">import</code> setup_infrared
+<code class="token-keyword">from</code> infrared_client <code class="token-keyword">import</code> InfraredClient
+<code class="token-keyword">from</code> thermal_analysis <code class="token-keyword">import</code> ThermalDataProcessor
+
+<code class="token-comment"># One-line setup (interactive configuration)</code>
+config = <code class="token-function">setup_infrared</code>()
+
+<code class="token-comment"># Create API client and processor</code>
+client = <code class="token-class">InfraredClient</code>(config)
+processor = <code class="token-class">ThermalDataProcessor</code>(client)
+
+<code class="token-comment"># List available simulations</code>
+simulations = client.<code class="token-function">list_simulations</code>()
+<code class="token-keyword">for</code> sim <code class="token-keyword">in</code> simulations:
+    <code class="token-function">print</code>(<code class="token-string">f"</code><code class="token-variable">{sim['name']}</code><code class="token-string">: </code><code class="token-variable">{sim['status']}</code><code class="token-string">"</code>)
+
+<code class="token-comment"># Load first completed simulation</code>
+sim_id = simulations[<code class="token-number">0</code>][<code class="token-string">'id'</code>]
+results = processor.<code class="token-function">load_simulation_results</code>(sim_id)
+
+<code class="token-comment"># Calculate key metrics</code>
+stats = processor.<code class="token-function">calculate_basic_statistics</code>(results)
+<code class="token-function">print</code>(<code class="token-string">f"Mean UTCI: </code><code class="token-variable">{stats['mean']:.1f}</code><code class="token-string">°C"</code>)
+
+stress = processor.<code class="token-function">calculate_stress_percentages</code>(results)
+<code class="token-function">print</code>(<code class="token-string">f"Heat stress: </code><code class="token-variable">{stress['total_heat_stress']:.1f}</code><code class="token-string">%"</code>)
+
+<code class="token-comment"># You're ready to analyze!</code>
+<code class="token-function">print</code>(<code class="token-string">"✓ Setup complete. Now explore the other modules."</code>)</pre>
+                    </div>
+                    
+                    <!-- Tab 1: Basic Analysis -->
+                    <div class="code-panel" id="codePanel1" style="display:none;">
+                        <div class="code-header">
+                            <span class="code-filename">basic_analysis.py</span>
+                            <button class="code-copy" onclick="copyCode(1)">
+                                <i class="bi bi-clipboard"></i>
+                                <span>Copy</span>
+                            </button>
+                        </div>
+                        <pre><code class="token-keyword">import</code> pandas <code class="token-keyword">as</code> pd
+<code class="token-keyword">import</code> matplotlib.pyplot <code class="token-keyword">as</code> plt
+
+<code class="token-comment"># Assuming you've already loaded results (see Quick Start)</code>
+<code class="token-comment"># Convert to DataFrame for easy analysis</code>
+df = processor.<code class="token-function">results_to_dataframe</code>(results)
+
+<code class="token-comment"># Basic Statistics</code>
+<code class="token-function">print</code>(<code class="token-string">"="</code> * <code class="token-number">60</code>)
+<code class="token-function">print</code>(<code class="token-string">"THERMAL COMFORT ANALYSIS"</code>)
+<code class="token-function">print</code>(<code class="token-string">"="</code> * <code class="token-number">60</code>)
+
+<code class="token-comment"># UTCI distribution</code>
+<code class="token-function">print</code>(<code class="token-string">f"\nUTCI Statistics:"</code>)
+<code class="token-function">print</code>(<code class="token-string">f"  Mean:    </code><code class="token-variable">{df['utci'].mean():.1f}</code><code class="token-string">°C"</code>)
+<code class="token-function">print</code>(<code class="token-string">f"  Median:  </code><code class="token-variable">{df['utci'].median():.1f}</code><code class="token-string">°C"</code>)
+<code class="token-function">print</code>(<code class="token-string">f"  Std Dev: </code><code class="token-variable">{df['utci'].std():.1f}</code><code class="token-string">°C"</code>)
+<code class="token-function">print</code>(<code class="token-string">f"  Range:   </code><code class="token-variable">{df['utci'].min():.1f}</code><code class="token-string">°C to </code><code class="token-variable">{df['utci'].max():.1f}</code><code class="token-string">°C"</code>)
+
+<code class="token-comment"># Thermal stress distribution</code>
+<code class="token-function">print</code>(<code class="token-string">f"\nThermal Stress Distribution:"</code>)
+comfortable = (df[<code class="token-string">'is_comfortable'</code>].<code class="token-function">sum</code>() / <code class="token-function">len</code>(df)) * <code class="token-number">100</code>
+<code class="token-function">print</code>(<code class="token-string">f"  Comfortable (9-26°C): </code><code class="token-variable">{comfortable:.1f}</code><code class="token-string">%"</code>)
+
+heat_stress = ((df[<code class="token-string">'utci'</code>] > <code class="token-number">26</code>).<code class="token-function">sum</code>() / <code class="token-function">len</code>(df)) * <code class="token-number">100</code>
+<code class="token-function">print</code>(<code class="token-string">f"  Heat stress (>26°C):  </code><code class="token-variable">{heat_stress:.1f}</code><code class="token-string">%"</code>)
+
+<code class="token-comment"># Visualize distribution</code>
+plt.<code class="token-function">figure</code>(figsize=(<code class="token-number">10</code>, <code class="token-number">6</code>))
+df[<code class="token-string">'utci'</code>].<code class="token-function">hist</code>(bins=<code class="token-number">50</code>, color=<code class="token-string">'#2c5f2d'</code>, alpha=<code class="token-number">0.7</code>)
+plt.<code class="token-function">axvline</code>(<code class="token-number">26</code>, color=<code class="token-string">'red'</code>, linestyle=<code class="token-string">'--'</code>, label=<code class="token-string">'Heat stress threshold'</code>)
+plt.<code class="token-function">xlabel</code>(<code class="token-string">'UTCI (°C)'</code>)
+plt.<code class="token-function">ylabel</code>(<code class="token-string">'Frequency'</code>)
+plt.<code class="token-function">title</code>(<code class="token-string">'UTCI Distribution Across Site'</code>)
+plt.<code class="token-function">legend</code>()
+plt.<code class="token-function">show</code>()</pre>
+                    </div>
+                    
+                    <!-- Tab 2: Assembly Metrics -->
+                    <div class="code-panel" id="codePanel2" style="display:none;">
+                        <div class="code-header">
+                            <span class="code-filename">assembly_complexity.py</span>
+                            <button class="code-copy" onclick="copyCode(2)">
+                                <i class="bi bi-clipboard"></i>
+                            </button>
+                        </div>
+                        <pre><code class="token-comment"># Calculate Thermal Assembly Complexity Index (TACI)
+# Based on Alberti (2016) "Cities That Think Like Planets"</code>
+
+assembly = processor.<code class="token-function">calculate_thermal_assembly_index</code>(results)
+
+<code class="token-function">print</code>(<code class="token-string">"="</code> * <code class="token-number">60</code>)
+<code class="token-function">print</code>(<code class="token-string">"REGENERATIVE METRICS: ASSEMBLY COMPLEXITY"</code>)
+<code class="token-function">print</code>(<code class="token-string">"="</code> * <code class="token-number">60</code>)
+
+<code class="token-function">print</code>(<code class="token-string">f"\n📊 Thermal Assembly Index: </code><code class="token-variable">{assembly['index']:.2f}</code><code class="token-string">"</code>)
+<code class="token-function">print</code>(<code class="token-string">f"   Interpretation: </code><code class="token-variable">{assembly['interpretation']}</code><code class="token-string">"</code>)
+
+<code class="token-function">print</code>(<code class="token-string">f"\n🔬 Component Breakdown:"</code>)
+<code class="token-function">print</code>(<code class="token-string">f"   Microclimate Zones:   </code><code class="token-variable">{assembly['num_zones']}</code><code class="token-string"> distinct zones"</code>)
+<code class="token-function">print</code>(<code class="token-string">f"   Temporal Variability: </code><code class="token-variable">{assembly['temporal_variability']:.1f}</code><code class="token-string">°C"</code>)
+<code class="token-function">print</code>(<code class="token-string">f"   Spatial Diversity:    </code><code class="token-variable">{assembly['spatial_diversity']:.2f}</code><code class="token-string"> (Shannon)"</code>)
+<code class="token-function">print</code>(<code class="token-string">f"   Edge Complexity:      </code><code class="token-variable">{assembly['edge_complexity']:.2f}</code><code class="token-string">"</code>)
+
+<code class="token-comment"># Design recommendations based on complexity</code>
+<code class="token-keyword">if</code> assembly[<code class="token-string">'index'</code>] < <code class="token-number">30</code>:
+    <code class="token-function">print</code>(<code class="token-string">f"\n💡 Design Priority: INCREASE microclimate diversity"</code>)
+    <code class="token-function">print</code>(<code class="token-string">"   • Vary vegetation heights (canopy, understory, ground)"</code>)
+    <code class="token-function">print</code>(<code class="token-string">"   • Create thermal gradients (sun/shade, wet/dry)"</code>)
+    <code class="token-function">print</code>(<code class="token-string">"   • Integrate water features"</code>)
+<code class="token-keyword">elif</code> assembly[<code class="token-string">'index'</code>] < <code class="token-number">60</code>:
+    <code class="token-function">print</code>(<code class="token-string">f"\n💡 Design Priority: ENHANCE existing diversity"</code>)
+    <code class="token-function">print</code>(<code class="token-string">"   • Add complementary vegetation layers"</code>)
+    <code class="token-function">print</code>(<code class="token-string">"   • Create temporal variation (deciduous + evergreen)"</code>)
+<code class="token-keyword">else</code>:
+    <code class="token-function">print</code>(<code class="token-string">f"\n✓ High complexity - Good ecological foundation"</code>)
+    <code class="token-function">print</code>(<code class="token-string">"   • Protect existing microclimates"</code>)
+    <code class="token-function">print</code>(<code class="token-string">"   • Monitor ecological indicators"</code>)</pre>
+                    </div>
+                    
+                    <!-- Tab 3: QGIS Export -->
+                    <div class="code-panel" id="codePanel3" style="display:none;">
+                        <div class="code-header">
+                            <span class="code-filename">qgis_export.py</span>
+                            <button class="code-copy" onclick="copyCode(3)">
+                                <i class="bi bi-clipboard"></i>
+                                <span>Copy</span>
+                            </button>
+                        </div>
+                        <pre><code class="token-keyword">from</code> infrared_workflows <code class="token-keyword">import</code> QGISExporter
+<code class="token-keyword">from</code> pathlib <code class="token-keyword">import</code> Path
+
+<code class="token-comment"># Initialize exporter</code>
+exporter = <code class="token-class">QGISExporter</code>(processor)
+
+<code class="token-comment"># Create output directory</code>
+output_dir = Path(<code class="token-string">'data/outputs'</code>)
+output_dir.<code class="token-function">mkdir</code>(parents=<code class="token-keyword">True</code>, exist_ok=<code class="token-keyword">True</code>)
+
+<code class="token-comment"># Export GeoTIFF (raster heatmap for thermal visualization)</code>
+<code class="token-function">print</code>(<code class="token-string">"Exporting GeoTIFF raster..."</code>)
+tif_path = exporter.<code class="token-function">export_geotiff</code>(
+    simulation_id=sim_id,
+    output_path=output_dir / <code class="token-string">'marseille_utci.tif'</code>,
+    variable=<code class="token-string">'utci'</code>,
+    resolution=<code class="token-number">5.0</code>  <code class="token-comment"># 5-meter grid cells</code>
+)
+<code class="token-function">print</code>(<code class="token-string">f"✓ Raster exported: </code><code class="token-variable">{tif_path}</code><code class="token-string">"</code>)
+
+<code class="token-comment"># Export GeoJSON (vector points with all attributes)</code>
+<code class="token-function">print</code>(<code class="token-string">f"\nExporting GeoJSON vector..."</code>)
+geojson_path = exporter.<code class="token-function">export_geojson</code>(
+    simulation_id=sim_id,
+    output_path=output_dir / <code class="token-string">'marseille_thermal_points.geojson'</code>,
+    include_categories=<code class="token-keyword">True</code>  <code class="token-comment"># Include thermal stress categories</code>
+)
+<code class="token-function">print</code>(<code class="token-string">f"✓ Vector exported: </code><code class="token-variable">{geojson_path}</code><code class="token-string">"</code>)
+
+<code class="token-comment"># QGIS import instructions</code>
+<code class="token-function">print</code>(<code class="token-string">f"\n" + "="*60</code>)
+<code class="token-function">print</code>(<code class="token-string">"QGIS IMPORT INSTRUCTIONS"</code>)
+<code class="token-function">print</code>(<code class="token-string">"="*60</code>)
+<code class="token-function">print</code>(<code class="token-string">f"1. Open QGIS and create new project"</code>)
+<code class="token-function">print</code>(<code class="token-string">f"2. Add Raster Layer: </code><code class="token-variable">{tif_path.name}</code><code class="token-string">"</code>)
+<code class="token-function">print</code>(<code class="token-string">f"   → Properties → Symbology → Singleband Pseudocolor"</code>)
+<code class="token-function">print</code>(<code class="token-string">f"   → Color ramp: Spectral (reversed)"</code>)
+<code class="token-function">print</code>(<code class="token-string">f"3. Add Vector Layer: </code><code class="token-variable">{geojson_path.name}</code><code class="token-string">"</code>)
+<code class="token-function">print</code>(<code class="token-string">f"   → Symbolize by: 'thermal_category' attribute"</code>)
+<code class="token-function">print</code>(<code class="token-string">f"4. Overlay with building footprints for spatial analysis"</code>)</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Learning Modules Section -->
+    <section class="modules-section" id="modules">
+        <div class="modules-container">
+            <div class="section-header" data-aos="fade-up">
+                <h2 class="section-title">Interactive Learning Modules</h2>
+                <p class="section-subtitle">
+                    Step-by-step lessons with theory, practice, and assessment
+                </p>
+            </div>
+
+            <div style="background:#eafaf1;border:1px solid #abebc6;border-left:5px solid #27ae60;border-radius:10px;padding:16px 20px;margin:0 auto 28px;max-width:900px">
+                <strong style="color:#1e8449">Updated for infrared-sdk 0.4.9.</strong>
+                Modules&nbsp;1&ndash;6 use the original hand-rolled REST client (now <em>legacy</em>: fetch results
+                by <code>simulation_id</code>). <strong>Modules&nbsp;7&ndash;8</strong> teach the current SDK &mdash;
+                <em>submit-and-run</em> over a polygon, multi-physics wind/solar/UTCI, and the live
+                Regenerative Microclimate Scorecard.
+            </div>
+            
+            <div class="module-accordion" data-aos="fade-up" data-aos-delay="100">
+                <!-- Module 1 -->
+                <div class="module-item" id="module-1">
+                    <div class="module-header" onclick="toggleModule(1)">
+                        <div class="module-header-content">
+                            <div class="module-number">MODULE 1</div>
+                            <h3 class="module-title">API Setup & Authentication</h3>
+                            <div class="module-meta">
+                                <span><i class="bi bi-clock"></i> 15 minutes</span>
+                                <span><i class="bi bi-graph-up"></i> Beginner</span>
+                            </div>
+                        </div>
+                        <div class="module-toggle">
+                            <i class="bi bi-chevron-down"></i>
+                        </div>
+                    </div>
+                    <div class="module-content">
+                        <div class="module-body">
+                            <p class="module-description">
+                                Learn industry-standard API authentication patterns. Understand OAuth 2.0 Bearer tokens,
+                                environment variable security, and connection validation strategies. This module teaches
+                                fundamental skills applicable to any cloud-based environmental analysis platform.
+                            </p>
+                            
+                            <div class="learning-objectives">
+                                <h4><i class="bi bi-check-circle"></i> Learning Outcomes</h4>
+                                <ul>
+                                    <li>Explain why API keys should never be hardcoded in scripts</li>
+                                    <li>Configure environment variables for secure credential storage</li>
+                                    <li>Validate API connections with proper error handling</li>
+                                    <li>Understand retry logic and exponential backoff patterns</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="module-actions">
+                                <a href="#" class="btn-module" onclick="return false;">
+                                    <i class="bi bi-play-circle"></i> Watch Video (5 min)
+                                </a>
+                                <a href="#code" class="btn-module secondary">
+                                    <i class="bi bi-code-slash"></i> View Code
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Module 2 -->
+                <div class="module-item" id="module-2">
+                    <div class="module-header" onclick="toggleModule(2)">
+                        <div class="module-header-content">
+                            <div class="module-number">MODULE 2</div>
+                            <h3 class="module-title">UTCI Fundamentals & Thermal Comfort</h3>
+                            <div class="module-meta">
+                                <span><i class="bi bi-clock"></i> 25 minutes</span>
+                                <span><i class="bi bi-graph-up"></i> Intermediate</span>
+                            </div>
+                        </div>
+                        <div class="module-toggle">
+                            <i class="bi bi-chevron-down"></i>
+                        </div>
+                    </div>
+                    <div class="module-content">
+                        <div class="module-body">
+                            <p class="module-description">
+                                Deep dive into Universal Thermal Climate Index (UTCI) - the physiological thermal comfort
+                                assessment standard. Learn how UTCI integrates air temperature, humidity, wind speed, and
+                                radiation to predict human thermal sensation. Understand comfort thresholds and stress categories.
+                            </p>
+                            
+                            <div class="learning-objectives">
+                                <h4><i class="bi bi-check-circle"></i> Learning Outcomes</h4>
+                                <ul>
+                                    <li>Explain the four environmental factors that determine UTCI</li>
+                                    <li>Categorize UTCI values into thermal stress levels</li>
+                                    <li>Calculate heat stress percentages for design assessment</li>
+                                    <li>Interpret UTCI distributions for Mediterranean climates</li>
+                                    <li>Apply UTCI thresholds to identify priority intervention zones</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="module-actions">
+                                <a href="#" class="btn-module" onclick="return false;">
+                                    <i class="bi bi-play-circle"></i> Watch Video (8 min)
+                                </a>
+                                <a href="#" class="btn-module secondary" onclick="return false;">
+                                    <i class="bi bi-file-earmark-pdf"></i> Read Paper (Błażejczyk et al., 2013)
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Module 3 -->
+                <div class="module-item" id="module-3">
+                    <div class="module-header" onclick="toggleModule(3)">
+                        <div class="module-header-content">
+                            <div class="module-number">MODULE 3</div>
+                            <h3 class="module-title">Assembly Theory for Urban Thermal Environments</h3>
+                            <div class="module-meta">
+                                <span><i class="bi bi-clock"></i> 40 minutes</span>
+                                <span><i class="bi bi-graph-up"></i> Advanced</span>
+                            </div>
+                        </div>
+                        <div class="module-toggle">
+                            <i class="bi bi-chevron-down"></i>
+                        </div>
+                    </div>
+                    <div class="module-content">
+                        <div class="module-body">
+                            <p class="module-description">
+                                Operationalize Marina Alberti's "planetary thinking" framework computationally. Learn how
+                                assembly complexity (number of components × interaction diversity) translates to thermal
+                                environments. Calculate microclimate zone diversity, temporal variability, and spatial complexity
+                                to assess ecological potential.
+                            </p>
+                            
+                            <div class="learning-objectives">
+                                <h4><i class="bi bi-check-circle"></i> Learning Outcomes</h4>
+                                <ul>
+                                    <li>Explain Alberti's assembly theory in urban ecological context</li>
+                                    <li>Calculate Thermal Assembly Complexity Index (TACI)</li>
+                                    <li>Interpret Shannon diversity applied to thermal zones</li>
+                                    <li>Assess thermal edge complexity (gradient density)</li>
+                                    <li>Connect complexity metrics to regenerative design goals</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="module-actions">
+                                <a href="#" class="btn-module" onclick="return false;">
+                                    <i class="bi bi-play-circle"></i> Watch Lecture (15 min)
+                                </a>
+                                <a href="#" class="btn-module secondary" onclick="return false;">
+                                    <i class="bi bi-book"></i> Read: Cities That Think Like Planets
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Module 4 -->
+                <div class="module-item" id="module-4">
+                    <div class="module-header" onclick="toggleModule(4)">
+                        <div class="module-header-content">
+                            <div class="module-number">MODULE 4</div>
+                            <h3 class="module-title">QGIS Spatial Analysis Integration</h3>
+                            <div class="module-meta">
+                                <span><i class="bi bi-clock"></i> 35 minutes</span>
+                                <span><i class="bi bi-graph-up"></i> Intermediate</span>
+                            </div>
+                        </div>
+                        <div class="module-toggle">
+                            <i class="bi bi-chevron-down"></i>
+                        </div>
+                    </div>
+                    <div class="module-content">
+                        <div class="module-body">
+                            <p class="module-description">
+                                Master georeferenced data export for spatial analysis in QGIS. Learn coordinate reference systems
+                                (CRS), GeoTIFF creation, vector attribution, and spatial overlay analysis. Combine thermal data
+                                with socio-demographic layers for climate justice assessment.
+                            </p>
+                            
+                            <div class="learning-objectives">
+                                <h4><i class="bi bi-check-circle"></i> Learning Outcomes</h4>
+                                <ul>
+                                    <li>Explain coordinate reference systems (EPSG:2154 vs. EPSG:4326)</li>
+                                    <li>Export properly georeferenced GeoTIFF rasters</li>
+                                    <li>Create attributed GeoJSON vectors for spatial queries</li>
+                                    <li>Perform spatial joins (thermal data + building footprints)</li>
+                                    <li>Generate styled layer files (QML) for automatic visualization</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="module-actions">
+                                <a href="#qgis" class="btn-module">
+                                    <i class="bi bi-map"></i> View QGIS Workflow
+                                </a>
+                                <a href="#" class="btn-module secondary" onclick="return false;">
+                                    <i class="bi bi-download"></i> Download Sample Data
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Module 5 -->
+                <div class="module-item" id="module-5">
+                    <div class="module-header" onclick="toggleModule(5)">
+                        <div class="module-header-content">
+                            <div class="module-number">MODULE 5</div>
+                            <h3 class="module-title">Scenario Comparison & Design Decisions</h3>
+                            <div class="module-meta">
+                                <span><i class="bi bi-clock"></i> 45 minutes</span>
+                                <span><i class="bi bi-graph-up"></i> Advanced</span>
+                            </div>
+                        </div>
+                        <div class="module-toggle">
+                            <i class="bi bi-chevron-down"></i>
+                        </div>
+                    </div>
+                    <div class="module-content">
+                        <div class="module-body">
+                            <p class="module-description">
+                                Compare baseline vs. intervention scenarios quantitatively. Calculate regenerative metric
+                                improvements, visualize performance differences, and make evidence-based design decisions.
+                                Understand when thermal comfort gains come at the cost of ecological complexity (and vice versa).
+                            </p>
+                            
+                            <div class="learning-objectives">
+                                <h4><i class="bi bi-check-circle"></i> Learning Outcomes</h4>
+                                <ul>
+                                    <li>Define baseline conditions for comparative assessment</li>
+                                    <li>Calculate percentage improvements across multiple metrics</li>
+                                    <li>Identify trade-offs between human comfort and ecological complexity</li>
+                                    <li>Visualize scenario comparisons with bar charts and heatmaps</li>
+                                    <li>Apply regenerative criteria (comfort + complexity) to design decisions</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="module-actions">
+                                <a href="#" class="btn-module" onclick="return false;">
+                                    <i class="bi bi-play-circle"></i> Watch Case Study (12 min)
+                                </a>
+                                <a href="#code" class="btn-module secondary">
+                                    <i class="bi bi-code-slash"></i> View Comparison Code
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Module 6 -->
+                <div class="module-item" id="module-6">
+                    <div class="module-header" onclick="toggleModule(6)">
+                        <div class="module-header-content">
+                            <div class="module-number">MODULE 6</div>
+                            <h3 class="module-title">Climate Justice & Thermal Vulnerability</h3>
+                            <div class="module-meta">
+                                <span><i class="bi bi-clock"></i> 30 minutes</span>
+                                <span><i class="bi bi-graph-up"></i> Advanced</span>
+                            </div>
+                        </div>
+                        <div class="module-toggle">
+                            <i class="bi bi-chevron-down"></i>
+                        </div>
+                    </div>
+                    <div class="module-content">
+                        <div class="module-body">
+                            <p class="module-description">
+                                Apply climate justice frameworks to thermal analysis. Map vulnerability using combined
+                                thermal exposure, social factors, and cooling access. Prioritize interventions in neighborhoods
+                                with highest vulnerability scores, ensuring equitable distribution of thermal benefits.
+                            </p>
+                            
+                            <div class="learning-objectives">
+                                <h4><i class="bi bi-check-circle"></i> Learning Outcomes</h4>
+                                <ul>
+                                    <li>Calculate Climate Justice Vulnerability Index (CJVI)</li>
+                                    <li>Overlay thermal data with socio-demographic indicators</li>
+                                    <li>Identify vulnerable populations (elderly, low-income, migrants)</li>
+                                    <li>Map cooling access (tree canopy, public spaces)</li>
+                                    <li>Prioritize interventions for thermal justice (not just efficiency)</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="module-actions">
+                                <a href="#" class="btn-module" onclick="return false;">
+                                    <i class="bi bi-play-circle"></i> Watch Ethics Lecture (10 min)
+                                </a>
+                                <a href="#" class="btn-module secondary" onclick="return false;">
+                                    <i class="bi bi-file-earmark-text"></i> Read: Quane (2024)
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Module 7 (NEW: SDK 0.4.9) -->
+                <div class="module-item" id="module-7">
+                    <div class="module-header" onclick="toggleModule(7)">
+                        <div class="module-header-content">
+                            <div class="module-number" style="color:#27ae60">MODULE 7 &middot; NEW</div>
+                            <h3 class="module-title">infrared-sdk 0.4.9 &mdash; Submit &amp; Run</h3>
+                            <div class="module-meta">
+                                <span><i class="bi bi-clock"></i> 25 minutes</span>
+                                <span><i class="bi bi-graph-up"></i> Core update</span>
+                            </div>
+                        </div>
+                        <div class="module-toggle">
+                            <i class="bi bi-chevron-down"></i>
+                        </div>
+                    </div>
+                    <div class="module-content">
+                        <div class="module-body">
+                            <p class="module-description">
+                                The official <code>infrared-sdk</code> replaces the hand-rolled REST client of
+                                Modules&nbsp;1&ndash;6. The mental model has changed: instead of fetching results
+                                from a pre-existing simulation by <code>simulation_id</code>, you now
+                                <strong>submit a geometry and an analysis request, and the SDK tiles the area,
+                                runs the jobs, polls them, and returns a merged NumPy grid</strong>. The API key
+                                is read from the <code>INFRARED_API_KEY</code> environment variable
+                                (a local <code>.env</code> is auto-loaded).
+                            </p>
+                            <div class="learning-objectives">
+                                <h4><i class="bi bi-check-circle"></i> Learning Outcomes</h4>
+                                <ul>
+                                    <li>Construct an <code>InfraredClient()</code> and a typed <code>*ModelRequest</code></li>
+                                    <li>Run an analysis with <code>run_area_and_wait(request, polygon)</code></li>
+                                    <li>Inject real <strong>buildings</strong>, <strong>weather</strong> and <strong>vegetation</strong> layers</li>
+                                    <li>Read results from <code>AreaResult.merged_grid</code> (no manual JSON parsing)</li>
+                                </ul>
+                            </div>
+                            <pre style="background:#0f1b2a;color:#d6e2f0;padding:16px 18px;border-radius:10px;overflow:auto;font-size:13px;line-height:1.55"><code>import infrared_sdk as ir
+from infrared_sdk.models import TimePeriod
+
+client = ir.InfraredClient()                 # reads INFRARED_API_KEY
+
+polygon = {"type": "Polygon", "coordinates": [[...]]}   # your GeoJSON site
+weather = client.weather.get_weather_file_from_location(lat=43.30, lon=5.37)
+buildings = client.buildings.get_area(polygon).buildings   # context geometry
+
+req = ir.UtciModelRequest(
+    latitude=43.30, longitude=5.37,
+    analysis_type="thermal-comfort-index",
+    time_period=TimePeriod(start_month=8, start_day=15, start_hour=9,
+                           end_month=8, end_day=15, end_hour=18),
+)
+area = client.run_area_and_wait(req, polygon, buildings=buildings)
+grid = area.merged_grid          # 2-D NumPy array, NaN outside the polygon</code></pre>
+                            <div class="note-box" style="background:#fff7e6;border:1px solid #f0d9a7;border-radius:8px;padding:12px 14px;margin-top:14px;font-size:14px">
+                                <strong>Gotcha:</strong> <code>thermal-comfort-index</code> rejects a request with
+                                <em>"At least one of [geometries, vegetation] must contain geometry data"</em> if you
+                                run it on a bare tile &mdash; always inject buildings (and/or vegetation) and supply
+                                the weather arrays.
+                            </div>
+                            <div class="module-actions">
+                                <a href="https://infrared.city/docs/sdk/" target="_blank" rel="noopener" class="btn-module">
+                                    <i class="bi bi-book"></i> SDK Docs
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Module 8 (NEW: Capstone) -->
+                <div class="module-item" id="module-8">
+                    <div class="module-header" onclick="toggleModule(8)">
+                        <div class="module-header-content">
+                            <div class="module-number" style="color:#27ae60">MODULE 8 &middot; CAPSTONE</div>
+                            <h3 class="module-title">Regenerative Microclimate Scorecard</h3>
+                            <div class="module-meta">
+                                <span><i class="bi bi-clock"></i> 40 minutes</span>
+                                <span><i class="bi bi-graph-up"></i> Multi-physics</span>
+                            </div>
+                        </div>
+                        <div class="module-toggle">
+                            <i class="bi bi-chevron-down"></i>
+                        </div>
+                    </div>
+                    <div class="module-content">
+                        <div class="module-body">
+                            <p class="module-description">
+                                The capstone runs all three focus analyses &mdash; <strong>UTCI, wind and solar</strong>
+                                &mdash; over one site and compares a <strong>baseline</strong> (buildings only) against a
+                                <strong>regenerative intervention</strong> (real tree canopy injected via the SDK). Each
+                                result grid is scored with the regenerative metrics from Modules&nbsp;3&ndash;4
+                                (heat-stress&nbsp;%, Thermal Assembly Complexity Index), now computed grid-native.
+                            </p>
+                            <div class="learning-objectives">
+                                <h4><i class="bi bi-check-circle"></i> Learning Outcomes</h4>
+                                <ul>
+                                    <li>Orchestrate multi-physics analyses in one workflow</li>
+                                    <li>Model an intervention by injecting <code>client.vegetation.get_area(polygon).features</code></li>
+                                    <li>Quantify the regenerative delta (heat-stress, assembly complexity)</li>
+                                    <li>Render a one-page scorecard figure for design review</li>
+                                </ul>
+                            </div>
+                            <p style="font-size:14px;margin:10px 0 4px"><strong>Live result (Marseille, Vieux-Port):</strong>
+                            buildings&nbsp;968, trees&nbsp;579 &mdash; adding canopy moved heat-stress area
+                            92.1%&nbsp;&rarr;&nbsp;91.3% and assembly complexity&nbsp;+6.3%.</p>
+                            <div class="module-actions">
+                                <a href="scorecard.html" class="btn-module">
+                                    <i class="bi bi-box-arrow-up-right"></i> View Live Scorecard
+                                </a>
+                                <a href="#code" class="btn-module secondary">
+                                    <i class="bi bi-code-slash"></i> View Code
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Thermal Metrics Visualization -->
+    <section class="metrics-section" id="metrics">
+        <div class="metrics-container">
+            <div class="section-header" data-aos="fade-up">
+                <h2 class="section-title">Understanding Thermal Metrics</h2>
+                <p class="section-subtitle">
+                    Visual guide to UTCI scale and regenerative design metrics
+                </p>
+            </div>
+            
+            <div data-aos="fade-up" data-aos-delay="100">
+                <h3 class="text-center" style="margin-bottom: 1rem;">Universal Thermal Climate Index (UTCI) Scale</h3>
+                <div class="thermal-scale"></div>
+                <div class="thermal-labels">
+                    <span>Extreme Cold<br>&lt;-40°C</span>
+                    <span>Cold Stress<br>-13 to 0°C</span>
+                    <span>Comfortable<br>9 to 26°C</span>
+                    <span>Heat Stress<br>26 to 38°C</span>
+                    <span>Extreme Heat<br>&gt;46°C</span>
+                </div>
+            </div>
+            
+            <div class="metrics-grid">
+                <!-- Metric 1 -->
+                <div class="metric-card" data-aos="fade-up" data-aos-delay="200">
+                    <div class="metric-icon">
+                        <i class="bi bi-thermometer-half"></i>
+                    </div>
+                    <div class="metric-title">Mean UTCI</div>
+                    <div class="metric-value">28.4°C</div>
+                    <p class="metric-description">
+                        Average thermal conditions across site. Marseille summer baseline.
+                        Target: &lt;26°C for comfort.
+                    </p>
+                </div>
+                
+                <!-- Metric 2 -->
+                <div class="metric-card" data-aos="fade-up" data-aos-delay="300">
+                    <div class="metric-icon">
+                        <i class="bi bi-fire"></i>
+                    </div>
+                    <div class="metric-title">Heat Stress</div>
+                    <div class="metric-value">42.3%</div>
+                    <p class="metric-description">
+                        Percentage of site experiencing UTCI &gt;26°C.
+                        Priority intervention zone.
+                    </p>
+                </div>
+                
+                <!-- Metric 3 -->
+                <div class="metric-card" data-aos="fade-up" data-aos-delay="400">
+                    <div class="metric-icon">
+                        <i class="bi bi-diagram-3"></i>
+                    </div>
+                    <div class="metric-title">Assembly Index</div>
+                    <div class="metric-value">67.8</div>
+                    <p class="metric-description">
+                        Thermal complexity score. Higher values indicate more diverse
+                        microclimate zones (ecological benefit).
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- QGIS Integration Guide -->
+    <section class="qgis-section" id="qgis">
+        <div class="qgis-container">
+            <div class="section-header" data-aos="fade-up">
+                <h2 class="section-title">QGIS Integration Workflow</h2>
+                <p class="section-subtitle">
+                    Step-by-step guide to importing and analyzing thermal data in QGIS
+                </p>
+            </div>
+            
+            <div class="qgis-steps">
+                <!-- Step 1 -->
+                <div class="qgis-step" data-aos="fade-up" data-aos-delay="100">
+                    <div class="qgis-step-number">1</div>
+                    <div class="qgis-step-content">
+                        <h4 class="qgis-step-title">Export Georeferenced Data</h4>
+                        <p class="qgis-step-description">
+                            Use the Python toolkit to export thermal data as GeoTIFF rasters and GeoJSON vectors.
+                            The toolkit automatically handles coordinate reference systems (Lambert 93 for Marseille).
+                        </p>
+                        <div class="qgis-command">
+exporter.export_geotiff(sim_id, 'marseille_utci.tif', resolution=5.0)</div>
+                    </div>
+                </div>
+                
+                <!-- Step 2 -->
+                <div class="qgis-step" data-aos="fade-up" data-aos-delay="200">
+                    <div class="qgis-step-number">2</div>
+                    <div class="qgis-step-content">
+                        <h4 class="qgis-step-title">Import Raster Layer</h4>
+                        <p class="qgis-step-description">
+                            Open QGIS and import the GeoTIFF file. The coordinate system is embedded in the file metadata,
+                            so QGIS will automatically recognize the projection.
+                        </p>
+                        <div class="qgis-command">
+Layer → Add Layer → Add Raster Layer → Select .tif file</div>
+                    </div>
+                </div>
+                
+                <!-- Step 3 -->
+                <div class="qgis-step" data-aos="fade-up" data-aos-delay="300">
+                    <div class="qgis-step-number">3</div>
+                    <div class="qgis-step-content">
+                        <h4 class="qgis-step-title">Symbolize Thermal Data</h4>
+                        <p class="qgis-step-description">
+                            Right-click the layer and select Properties → Symbology.
+                            Choose "Singleband Pseudocolor" and select the "Spectral" color ramp (reversed).
+                            Blue = cold, green = comfortable, red = hot.
+                        </p>
+                        <div class="qgis-command">
+Properties → Symbology → Singleband Pseudocolor → Spectral (Reversed)</div>
+                    </div>
+                </div>
+                
+                <!-- Step 4 -->
+                <div class="qgis-step" data-aos="fade-up" data-aos-delay="400">
+                    <div class="qgis-step-number">4</div>
+                    <div class="qgis-step-content">
+                        <h4 class="qgis-step-title">Spatial Overlay Analysis</h4>
+                        <p class="qgis-step-description">
+                            Import building footprints and perform spatial queries.
+                            Example: "Which buildings have >50% of their area in heat stress zones (UTCI &gt;26°C)?"
+                            Use Vector → Geoprocessing Tools → Intersection.
+                        </p>
+                        <div class="qgis-command">
+Vector → Geoprocessing Tools → Intersection → buildings × thermal_zones</div>
+                    </div>
+                </div>
+                
+                <!-- Step 5 -->
+                <div class="qgis-step" data-aos="fade-up" data-aos-delay="500">
+                    <div class="qgis-step-number">5</div>
+                    <div class="qgis-step-content">
+                        <h4 class="qgis-step-title">Export Maps for Dossier</h4>
+                        <p class="qgis-step-description">
+                            Use Print Layout to create publication-quality maps.
+                            Add scale bar, north arrow, legend, and attribution.
+                            Export as high-resolution PDF or PNG for Technical Dossier inclusion.
+                        </p>
+                        <div class="qgis-command">
+Project → New Print Layout → Add Map → Export as PDF (300 DPI)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-grid">
+                <div class="footer-section">
+                    <h3>Resources</h3>
+                    <ul class="footer-links">
+                        <li><a href="#"><i class="bi bi-github"></i> GitHub Repository</a></li>
+                        <li><a href="#"><i class="bi bi-file-pdf"></i> Download Toolkit</a></li>
+                        <li><a href="#"><i class="bi bi-book"></i> Documentation</a></li>
+                        <li><a href="#"><i class="bi bi-youtube"></i> Video Tutorials</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Learning</h3>
+                    <ul class="footer-links">
+                        <li><a href="#workflow"><i class="bi bi-diagram-3"></i> Complete Workflow</a></li>
+                        <li><a href="#code"><i class="bi bi-code-slash"></i> Code Examples</a></li>
+                        <li><a href="#modules"><i class="bi bi-collection"></i> All Modules</a></li>
+                        <li><a href="#qgis"><i class="bi bi-map"></i> QGIS Guide</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Support</h3>
+                    <ul class="footer-links">
+                        <li><a href="#"><i class="bi bi-question-circle"></i> FAQs</a></li>
+                        <li><a href="#"><i class="bi bi-chat-dots"></i> Discussion Forum</a></li>
+                        <li><a href="#"><i class="bi bi-envelope"></i> Contact Instructor</a></li>
+                        <li><a href="#"><i class="bi bi-calendar"></i> Office Hours</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>
+                    AT6012 Design Research: Technology Transformations<br>
+                    University College Cork - School of Architecture<br>
+                    © 2025 | Made with <i class="bi bi-heart-fill" style="color: var(--secondary);"></i> for regenerative design
+                </p>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Floating Action Button -->
+    <div class="fab" onclick="scrollToTop()" title="Back to top">
+        <i class="bi bi-arrow-up"></i>
+    </div>
+    
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+    <script>
+        // Initialize AOS (Animate On Scroll)
+        AOS.init({
+            duration: 800,
+            easing: 'ease-in-out',
+            once: true
+        });
+        
+        // Progress Bar
+        window.addEventListener('scroll', () => {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            document.getElementById('progressFill').style.width = scrolled + '%';
+        });
+        
+        // Navbar Hide on Scroll Down
+        let lastScrollTop = 0;
+        const navbar = document.getElementById('navbar');
+        
+        window.addEventListener('scroll', () => {
+            let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            
+            if (scrollTop > lastScrollTop && scrollTop > 100) {
+                navbar.classList.add('hidden');
+            } else {
+                navbar.classList.remove('hidden');
+            }
+            lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
+        });
+        
+        // Mobile Menu Toggle
+        const navToggle = document.getElementById('navToggle');
+        const mobileMenu = document.getElementById('mobileMenu');
+        
+        navToggle.addEventListener('click', () => {
+            navToggle.classList.toggle('active');
+            mobileMenu.classList.toggle('active');
+        });
+        
+        function closeMobileMenu() {
+            navToggle.classList.remove('active');
+            mobileMenu.classList.remove('active');
+        }
+        
+        // Code Tab Switching
+        function switchCodeTab(index) {
+            // Hide all panels
+            const panels = document.querySelectorAll('.code-panel');
+            panels.forEach(panel => panel.style.display = 'none');
+            
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('.code-tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Show selected panel and activate tab
+            document.getElementById(`codePanel${index}`).style.display = 'block';
+            tabs[index].classList.add('active');
+        }
+        
+        // Copy Code to Clipboard
+        function copyCode(index) {
+            const panel = document.getElementById(`codePanel${index}`);
+            const code = panel.querySelector('pre').innerText;
+            
+            navigator.clipboard.writeText(code).then(() => {
+                const btn = panel.querySelector('.code-copy');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="bi bi-check2"></i><span>Copied!</span>';
+                btn.classList.add('copied');
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+        
+        // Module Accordion
+        function toggleModule(index) {
+            const item = document.getElementById(`module-${index}`);
+            const content = item.querySelector('.module-content');
+            
+            // Close other modules
+            document.querySelectorAll('.module-item').forEach(module => {
+                if (module !== item) {
+                    module.classList.remove('active');
+                    module.querySelector('.module-content').classList.remove('active');
+                }
+            });
+            
+            // Toggle current module
+            item.classList.toggle('active');
+            content.classList.toggle('active');
+        }
+        
+        function openModule(index) {
+            const item = document.getElementById(`module-${index}`);
+            item.classList.add('active');
+            item.querySelector('.module-content').classList.add('active');
+            
+            // Scroll to module
+            item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        
+        // Scroll to Top
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        // Download Toolkit
+        function downloadToolkit() {
+            alert('Toolkit download will be available through Canvas.\n\nFor now, explore the interactive code examples and learning modules!');
+        }
+        
+        // Smooth Scroll for Anchor Links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                const href = this.getAttribute('href');
+                if (href !== '#' && document.querySelector(href)) {
+                    e.preventDefault();
+                    const target = document.querySelector(href);
+                    const offset = 80; // Account for fixed navbar
+                    const targetPosition = target.offsetTop - offset;
+                    
+                    window.scrollTo({
+                        top: targetPosition,
+                        behavior: 'smooth'
+                    });
+                    
+                    closeMobileMenu();
+                }
+            });
+        });
+        
+        // Log analytics (in production, integrate with Google Analytics or similar)
+        console.log('✓ Infrared.City Learning Platform loaded');
+        console.log('📚 6 learning modules available');
+        console.log('💻 4 interactive code examples ready');
+        console.log('🌍 Happy regenerative designing!');
+    </script>
+  <script src="chrome.js" defer></script>
+</body>
+</html>
