@@ -63,6 +63,10 @@ uvicorn server:app --port 8000                            # backend for tool.htm
 Get an infrared.city API key at <https://infrared.city>. The key is read from the environment /
 `.env` (gitignored) and is never committed or sent to the browser.
 
+**Setting up on your own?** [`SETUP.md`](SETUP.md) has step-by-step account + API-key
+instructions for every source (infrared.city · Roboflow · Copernicus/Sentinel Hub · GUS.earth),
+which are keyless, and full run commands. All keys go in one file: `.env` (from `.env.example`).
+
 ## Live demo
 
 - design.curricula.dev/at6012/infrared.city/tool.html

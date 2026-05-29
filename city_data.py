@@ -236,14 +236,105 @@ def eo_worldcover_overlay(bbox: tuple, out_path: str) -> dict:
             "size": [w, h]}
 
 
-def roboflow_trees(image_path_or_url: str, model_id: str, api_key: str):
-    """Detect trees/canopy from an aerial tile via the Roboflow Inference API.
+def roboflow_trees(image_url: str, model: str | None = None,
+                   api_key: str | None = None, confidence: int = 40) -> dict:
+    """Detect trees/canopy in an aerial image via the Roboflow Inference API.
 
-    POSTs the image to https://detect.roboflow.com/<model_id>?api_key=...,
-    returns detections to be georeferenced into crown polygons. Requires a
-    Roboflow API key, a chosen model, and an imagery source.
+    Keys/model are read from the environment by default (see .env.example):
+      ROBOFLOW_API_KEY, ROBOFLOW_MODEL (e.g. "trees/3" = project/version).
+    `image_url` is a publicly reachable aerial/satellite tile. Returns Roboflow's
+    predictions dict (boxes/polygons) to georeference into crown geometry.
     """
-    raise NotImplementedError("Roboflow tier: needs ROBOFLOW_API_KEY + model + imagery.")
+    import os
+    api_key = api_key or os.getenv("ROBOFLOW_API_KEY")
+    model = model or os.getenv("ROBOFLOW_MODEL")
+    if not api_key or not model:
+        raise RuntimeError("Set ROBOFLOW_API_KEY and ROBOFLOW_MODEL (e.g. 'trees/3') in .env")
+    r = requests.post(f"https://detect.roboflow.com/{model}",
+                      params={"api_key": api_key, "image": image_url, "confidence": confidence},
+                      timeout=TIMEOUT)
+    r.raise_for_status()
+    return r.json()
+
+
+# --------------------------------------------------------------------------- #
+# Sentinel Hub / Copernicus Data Space Ecosystem — Sentinel-2 NDVI (OAuth)
+# --------------------------------------------------------------------------- #
+SH_TOKEN_URL = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
+SH_PROCESS_URL = "https://sh.dataspace.copernicus.eu/api/v1/process"
+
+_NDVI_EVALSCRIPT = """//VERSION=3
+function setup(){return{input:["B04","B08"],output:{bands:3}};}
+function evaluatePixel(s){
+  let ndvi=(s.B08-s.B04)/(s.B08+s.B04);
+  if(ndvi<0.1) return[0.65,0.45,0.25];
+  else if(ndvi<0.3) return[0.95,0.9,0.4];
+  else if(ndvi<0.5) return[0.45,0.8,0.2];
+  else return[0.0,0.45,0.0];
+}"""
+
+
+def sentinel_token(client_id: str | None = None, client_secret: str | None = None) -> str:
+    """OAuth2 client-credentials token for Copernicus Data Space / Sentinel Hub.
+    Reads SH_CLIENT_ID / SH_CLIENT_SECRET from env by default."""
+    import os
+    cid = client_id or os.getenv("SH_CLIENT_ID")
+    cs = client_secret or os.getenv("SH_CLIENT_SECRET")
+    if not cid or not cs:
+        raise RuntimeError("Set SH_CLIENT_ID and SH_CLIENT_SECRET in .env")
+    r = requests.post(SH_TOKEN_URL, timeout=TIMEOUT,
+                      data={"grant_type": "client_credentials",
+                            "client_id": cid, "client_secret": cs})
+    r.raise_for_status()
+    return r.json()["access_token"]
+
+
+def sentinel_ndvi(bbox: tuple, start: str = "2024-06-01", end: str = "2024-09-01",
+                  size: int = 256, max_cloud: int = 30, token: str | None = None) -> bytes:
+    """Sentinel-2 L2A NDVI as a coloured PNG (bytes) for a bbox via the Process API.
+    bbox = (min_lon, min_lat, max_lon, max_lat). Requires Sentinel Hub credentials."""
+    token = token or sentinel_token()
+    payload = {
+        "input": {
+            "bounds": {"bbox": list(bbox),
+                       "properties": {"crs": "http://www.opengis.net/def/crs/EPSG/0/4326"}},
+            "data": [{"type": "sentinel-2-l2a",
+                      "dataFilter": {"timeRange": {"from": f"{start}T00:00:00Z", "to": f"{end}T00:00:00Z"},
+                                     "maxCloudCoverage": max_cloud}}],
+        },
+        "output": {"width": size, "height": size,
+                   "responses": [{"identifier": "default", "format": {"type": "image/png"}}]},
+        "evalscript": _NDVI_EVALSCRIPT,
+    }
+    r = requests.post(SH_PROCESS_URL, json=payload, timeout=TIMEOUT,
+                      headers={"Authorization": f"Bearer {token}"})
+    r.raise_for_status()
+    return r.content
+
+
+# --------------------------------------------------------------------------- #
+# GUS.earth (gAIa) — urban-forest tree intelligence
+# --------------------------------------------------------------------------- #
+def gus_trees(bbox: tuple | None = None, api_key: str | None = None,
+              base: str | None = None, path: str = "/trees") -> dict:
+    """Thin authenticated client for the GUS.earth (gAIa) urban-forest API.
+
+    Reads GUS_API_KEY / GUS_API_BASE from env. The exact endpoint + params should
+    be confirmed against the live docs at https://backend.gus.earth/docs — adjust
+    `path` / params to match. Returns the JSON response.
+    """
+    import os
+    api_key = api_key or os.getenv("GUS_API_KEY")
+    base = base or os.getenv("GUS_API_BASE", "https://api.gus.earth")
+    if not api_key:
+        raise RuntimeError("Set GUS_API_KEY in .env (see https://backend.gus.earth/docs)")
+    params = {}
+    if bbox:
+        params["bbox"] = ",".join(str(x) for x in bbox)
+    r = requests.get(f"{base.rstrip('/')}{path}", timeout=TIMEOUT,
+                     headers={"Authorization": f"Bearer {api_key}"}, params=params)
+    r.raise_for_status()
+    return r.json()
 
 
 def main(argv=None) -> int:
