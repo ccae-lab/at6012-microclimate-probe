@@ -76,4 +76,7 @@ AT6012 Design Research, CCAE / UCC School of Architecture. Built on the
 lineage from the 2025 AT6012 toolkit. Data: Roma Capitale, Aix-Marseille Métropole, Cork City
 Council open data; ESA WorldCover via Microsoft Planetary Computer.
 
-MIT licensed — see `LICENSE`.
+**Apache License 2.0** — see `LICENSE` (consistent with the upstream infrared.city
+[infrared-skills](https://github.com/Infrared-city/infrared-skills), and chosen for its
+explicit patent grant in the spirit of the open-source community of practice). See `NOTICE`
+for attributions.

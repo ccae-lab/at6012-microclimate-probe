@@ -1,0 +1,13 @@
+Regenerative Microclimate Probe — AT6012
+Copyright 2026 CCAE / UCC School of Architecture
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this work except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Built on the infrared.city SDK and its skills/cookbook
+(https://github.com/Infrared-city/infrared-skills, Apache-2.0).
+Data: Roma Capitale, Aix-Marseille Métropole, Cork City Council open data;
+ESA WorldCover via Microsoft Planetary Computer.
