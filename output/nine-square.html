@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Twining — the synergetic 9-square | infrared Probe · AT6012</title>
+<meta name="description" content="A vector-equilibrium 9-square navigator for the Regenerative Microclimate Probe. Position carries meaning: top=principles, bottom=special cases, centre=the live probe." />
+<style>
+  /* ============================================================
+     TWINING — the synergetic nine-square.
+     Lineage: SCI-Arc / Buckminster Fuller Institute -> syncad.org/Handbook
+     -> AT6012 (CCAE / UCC). The law: POSITION CARRIES MEANING.
+       N (top)    = Generalised Principles
+       S (bottom) = Special-case Scenarios   (the abstraction gradient)
+       W (left)   = Definitions  <->  E (right) = Tools  (the dialectic)
+       Centre     = the live Probe, twining principle (above) & case (below)
+       Corners    = lineage / recipe / honest counter-case / exemplar
+     ============================================================ */
+  :root{
+    --ink:#14202c; --muted:#5b6b7a; --line:#dbe3ec; --paper:#eef1f4;
+    --north:#3b3f8f;       /* principle band — indigo (cool / abstract) */
+    --south:#b07a16;       /* special band  — amber (warm / concrete)  */
+    --west:#2c6e7a;        /* definitions   — teal                      */
+    --east:#a23b2e;        /* tools / action — rust                     */
+    --centre:#0f1b2a;      /* the nuclear vertex                        */
+    --tick-odd:#cdd7e1; --tick-even:#eef2f6;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink); background:#e4e8ec;
+    background-image:radial-gradient(circle at 50% 40%,#eef1f4,#dde3ea 70%);}
+
+  /* ---- page intro ---- */
+  .intro{max-width:1180px;margin:0 auto;padding:22px 20px 6px}
+  .intro h1{font-size:23px;margin:0 0 4px;letter-spacing:.01em}
+  .intro h1 .glyph{color:var(--south)}
+  .intro p{color:var(--muted);font-size:14px;margin:0 0 8px;max-width:760px}
+  .legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:#46566a;margin-top:6px}
+  .legend b{font-weight:700}
+  .swatch{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin-right:5px}
+
+  /* ---- the stage: rulers + margins + frame ---- */
+  .stage{max-width:1180px;margin:8px auto 0;padding:0 20px 10px}
+
+  /* the coordinate ruler (syncad Handbook): position = address.
+     12 ticks = a nod to the vector-equilibrium's 12 vertices.
+     Left of centre = W (definitions); right = E (tools). Odd/even cadence. */
+  .ruler{display:flex;align-items:stretch;gap:3px;height:22px;user-select:none}
+  .ruler .end{flex:0 0 64px;display:flex;align-items:center;font-size:10px;
+    letter-spacing:.08em;text-transform:uppercase;color:#7c8a99;font-weight:700}
+  .ruler .end.r{justify-content:flex-end;text-align:right}
+  .ruler .ticks{flex:1;display:grid;grid-template-columns:repeat(12,1fr);gap:3px}
+  .ruler .tick{position:relative;border:1px solid #c2ccd6;border-radius:2px;
+    background:var(--tick-even);font:700 9px/1 ui-monospace,Menlo,monospace;color:#8593a2;
+    display:flex;align-items:center;justify-content:center}
+  .ruler .tick.odd{background:var(--tick-odd)}
+  .ruler .tick.cool{box-shadow:inset 0 -3px 0 rgba(44,110,122,.5)}
+  .ruler .tick.warm{box-shadow:inset 0 -3px 0 rgba(162,59,46,.5)}
+  .ruler .tick.axis{background:var(--centre);color:#cfe;border-color:var(--centre)}
+  .ruler.bottom .tick.cool{box-shadow:inset 0 3px 0 rgba(44,110,122,.5)}
+  .ruler.bottom .tick.warm{box-shadow:inset 0 3px 0 rgba(162,59,46,.5)}
+
+  /* margins carry the axis names (the law, made legible) */
+  .with-margins{display:grid;grid-template-columns:64px 1fr 64px;gap:0;align-items:stretch}
+  .margin{display:flex;align-items:center;justify-content:center;writing-mode:vertical-rl;
+    font:700 11px/1.2 -apple-system,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#7c8a99}
+  .margin.west{color:var(--west)}
+  .margin.east{transform:rotate(180deg);color:var(--east)}
+
+  /* ---- the 3x3 frame ---- */
+  .frame{position:relative;padding:8px}
+  .grid{position:relative;z-index:2;display:grid;gap:8px;
+    grid-template-columns:1fr;             /* mobile portrait: 1 square */
+    scroll-snap-type:y proximity}
+  /* phone landscape / small tablet: 2 squares */
+  @media (min-width:560px){ .grid{grid-template-columns:1fr 1fr} }
+  /* laptop+: the full nine-square */
+  @media (min-width:960px){ .grid{grid-template-columns:repeat(3,1fr);grid-auto-rows:1fr} }
+
+  /* the vector-equilibrium truss — the GRID itself, not wallpaper.
+     Only drawn once the true 3x3 exists. */
+  .ve{position:absolute;inset:8px;z-index:1;display:none;pointer-events:none}
+  @media (min-width:960px){ .ve{display:block} }
+  .ve line{stroke:#9aa9b8;stroke-width:.04;vector-effect:non-scaling-stroke}
+  .ve line.spoke{stroke:#aebccb}
+  .ve .node{fill:#fff;stroke:#9aa9b8;stroke-width:.05;vector-effect:non-scaling-stroke}
+  .ve .nucleus{fill:var(--centre);stroke:var(--south);stroke-width:.09;vector-effect:non-scaling-stroke}
+
+  /* ---- a cell ---- */
+  .cell{position:relative;scroll-snap-align:start;min-height:152px;
+    background:#fff;border:1px solid var(--line);border-radius:10px;
+    padding:13px 14px 14px;cursor:pointer;overflow:hidden;
+    display:flex;flex-direction:column;
+    box-shadow:0 1px 2px rgba(20,32,44,.06);
+    transition:transform .14s ease, box-shadow .14s ease, border-color .14s}
+  @media (min-width:960px){ .cell{min-height:0} }
+  .cell:hover,.cell:focus-visible{transform:translateY(-2px);
+    box-shadow:0 8px 22px rgba(20,32,44,.14);outline:none;border-color:#b9c6d4}
+  .cell:focus-visible{box-shadow:0 0 0 3px rgba(59,63,143,.4)}
+
+  /* an accent rail keyed to the cell's role in the geometry */
+  .cell::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--rail,#cdd7e1)}
+  .cell.r-north{--rail:var(--north)} .cell.r-south{--rail:var(--south)}
+  .cell.r-west{--rail:var(--west)}   .cell.r-east{--rail:var(--east)}
+  .cell.r-corner{--rail:#8a99a8}
+  .cell.r-centre{--rail:var(--south)}
+
+  .cell .addr{position:absolute;top:8px;right:9px;font:700 10px/1 ui-monospace,Menlo,monospace;
+    color:#9aa7b4;background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:3px 5px}
+  .cell .addr.odd{background:#e7ecf2}
+  .cell .role{font:700 10px/1 -apple-system,sans-serif;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--rail);margin:0 0 7px}
+  .cell .glyph{font-size:26px;line-height:1;margin:0 0 7px}
+  .cell h3{font-size:16px;margin:0 0 4px;letter-spacing:.005em}
+  .cell .one{font-size:13px;color:var(--muted);margin:0}
+  .cell .more{margin-top:auto;padding-top:9px;font:700 11px/1 -apple-system,sans-serif;
+    letter-spacing:.04em;color:var(--rail);opacity:.85}
+  .cell .more::after{content:" ↗"}
+
+  /* the centre is the nuclear vertex — it visibly bridges N & S */
+  .cell.centre{background:linear-gradient(180deg,#15233a,#0f1b2a);color:#eaf0f6;border-color:#243245}
+  .cell.centre .role{color:#ffd9b3}
+  .cell.centre h3{color:#fff}
+  .cell.centre .one{color:#b9c6d4}
+  .cell.centre .more{color:#ffd9b3}
+  .cell.centre .addr{background:#1c2c40;border-color:#2c4056;color:#9fb4ca}
+  /* the twining spine: centre reaches toward N and S */
+  @media (min-width:960px){
+    .cell.centre::after{content:"";position:absolute;left:50%;transform:translateX(-50%);
+      top:-8px;bottom:-8px;width:2px;
+      background:repeating-linear-gradient(180deg,var(--south),var(--south) 5px,transparent 5px,transparent 10px);
+      opacity:.5;z-index:-1}
+  }
+
+  /* film-strip perforations on the outer edges (syncad ruler echo) */
+  @media (min-width:960px){
+    .cell.edge-top::before, .cell.edge-bottom::before{} /* keep rail */
+  }
+
+  /* the VE wheel hinge glyph (echoes the spoked wheel in the booklet) */
+  .hinge{display:none}
+  @media (min-width:960px){
+    .hinge{display:flex;position:absolute;left:-2px;top:50%;transform:translate(-50%,-50%);
+      z-index:5;width:34px;height:34px;align-items:center;justify-content:center;
+      background:#fff;border:2px solid var(--west);border-radius:50%}
+  }
+
+  /* ---- mobile gradient rail (replaces the VE on small screens) ---- */
+  .axis-note{display:block;text-align:center;font:700 11px/1 -apple-system,sans-serif;
+    letter-spacing:.08em;text-transform:uppercase;color:#8593a2;padding:6px 0}
+  @media (min-width:960px){ .axis-note{display:none} }
+  .count-pill{display:inline-block;margin-left:8px;font:700 11px/1 ui-monospace,monospace;
+    color:#7c8a99;background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px 9px}
+
+  /* ============ DEEP-DIVE: the single-square canvas ============ */
+  .deep{position:fixed;inset:0;z-index:100000;display:none;
+    background:rgba(12,18,28,.72);backdrop-filter:blur(3px);
+    padding:max(16px,3vh) max(16px,3vw)}
+  .deep.open{display:flex}
+  .deep-card{position:relative;margin:auto;width:min(1000px,100%);max-height:94vh;
+    background:#fff;border-radius:14px;overflow:hidden;display:flex;flex-direction:column;
+    box-shadow:0 30px 80px rgba(0,0,0,.45);animation:pop .18s ease}
+  @keyframes pop{from{transform:scale(.96);opacity:.4}to{transform:scale(1);opacity:1}}
+  .deep-head{flex:0 0 auto;display:flex;align-items:center;gap:14px;padding:16px 20px;
+    color:#fff;background:var(--dh,#0f1b2a)}
+  .deep-head .dglyph{font-size:30px;line-height:1}
+  .deep-head .drole{font:700 10px/1.2 -apple-system,sans-serif;letter-spacing:.1em;text-transform:uppercase;opacity:.85}
+  .deep-head h2{margin:2px 0 0;font-size:21px}
+  .deep-head .daddr{margin-left:auto;font:700 12px/1 ui-monospace,monospace;
+    background:rgba(255,255,255,.16);border-radius:6px;padding:6px 9px;white-space:nowrap}
+  .deep-close{flex:0 0 auto;width:34px;height:34px;border:0;border-radius:8px;cursor:pointer;
+    background:rgba(255,255,255,.16);color:#fff;font-size:20px;line-height:1}
+  .deep-close:hover{background:rgba(255,255,255,.28)}
+  .deep-body{flex:1 1 auto;overflow:auto;padding:22px 24px;font-size:15px}
+  .deep-body h4{font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:#46566a;
+    margin:22px 0 8px;border-bottom:1px solid var(--line);padding-bottom:5px}
+  .deep-body h4:first-child{margin-top:0}
+  .deep-body p{margin:0 0 10px;color:#2b3947}
+  .deep-body ul{margin:0 0 10px;padding-left:20px}.deep-body li{margin:4px 0}
+  .deep-body table{width:100%;border-collapse:collapse;margin:6px 0 12px;font-size:14px}
+  .deep-body th,.deep-body td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left}
+  .deep-body th{background:#eef3f8;font-size:11.5px;text-transform:uppercase;color:#4a5b6b}
+  .deep-body td.worse{color:#a23b2e;font-weight:700}
+  .deep-body td.better{color:#1e6b3a;font-weight:700}
+  .eq{background:#0f1b2a;color:#eaf0f6;border-radius:10px;padding:12px 16px;margin:10px 0;
+    font:15px/1.7 ui-monospace,Menlo,monospace;overflow-x:auto}
+  .eq b{color:#ffd9b3}
+  .pill{display:inline-block;background:#eef2f6;color:#33455a;border-radius:999px;
+    padding:2px 10px;font-size:12px;font-weight:600;margin:0 5px 5px 0}
+  .deep-body a.btn{display:inline-block;margin:4px 8px 4px 0;padding:9px 15px;border-radius:9px;
+    background:#3b3f8f;color:#fff;text-decoration:none;font-weight:700;font-size:13px}
+  .deep-body a.btn.alt{background:#eef2f6;color:#33455a}
+  .deep-body a.btn:hover{filter:brightness(1.08)}
+  .ladder{counter-reset:step;list-style:none;padding:0}
+  .ladder li{position:relative;padding:8px 8px 8px 40px;border-left:2px solid var(--line);margin-left:14px}
+  .ladder li::before{counter-increment:step;content:counter(step);position:absolute;left:-15px;top:6px;
+    width:28px;height:28px;border-radius:50%;background:#3b3f8f;color:#fff;
+    font:700 13px/28px ui-monospace,monospace;text-align:center}
+  .embedbox{width:100%;height:62vh;min-height:380px;border:1px solid var(--line);border-radius:10px}
+  .deep-nav{flex:0 0 auto;display:flex;justify-content:space-between;gap:10px;
+    padding:12px 20px;border-top:1px solid var(--line);background:#f6f8fa}
+  .deep-nav button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 14px;
+    cursor:pointer;font:600 13px inherit;color:#33455a}
+  .deep-nav button:hover{background:#eef2f6}
+  .deep-nav .label{align-self:center;font-size:12px;color:#7c8a99}
+  .callout{border-left:4px solid var(--south);background:#fff8ec;padding:10px 14px;border-radius:0 8px 8px 0;margin:10px 0}
+  .callout.honest{border-color:#a23b2e;background:#fbeeec}
+  .callout.win{border-color:#1e6b3a;background:#ecf7f0}
+</style>
+</head>
+<body>
+
+<div class="intro">
+  <h1>Twining <span class="glyph">相生</span> — the synergetic nine-square</h1>
+  <p>A vector-equilibrium navigator for the Regenerative Microclimate Probe.
+     <b>Position carries meaning.</b> The vertical axis is an abstraction gradient —
+     top is <b>generalised principle</b>, bottom is <b>special-case scenario</b>. The centre
+     is the <b>live probe</b>, twining principle (above) with case (below).</p>
+  <div class="legend">
+    <span><span class="swatch" style="background:var(--north)"></span><b>N</b> Principles</span>
+    <span><span class="swatch" style="background:var(--south)"></span><b>S</b> Special cases</span>
+    <span><span class="swatch" style="background:var(--west)"></span><b>W</b> Definitions</span>
+    <span><span class="swatch" style="background:var(--east)"></span><b>E</b> Tools</span>
+    <span><span class="swatch" style="background:var(--centre)"></span><b>·</b> Centre = live probe</span>
+    <span style="color:#9aa7b4">Corners = lineage · recipe · counter-case · exemplar</span>
+    <span class="count-pill" id="count">…</span>
+  </div>
+</div>
+
+<div class="stage">
+  <span class="axis-note">↑ general &nbsp;·&nbsp; scroll = principle → special &nbsp;·&nbsp; special ↓</span>
+
+  <!-- top coordinate ruler -->
+  <div class="ruler top" aria-hidden="true">
+    <span class="end">W · def</span>
+    <div class="ticks" id="ruler-top"></div>
+    <span class="end r">tool · E</span>
+  </div>
+
+  <div class="with-margins">
+    <div class="margin west">Definitions ◂ West</div>
+
+    <div class="frame">
+      <!-- the vector-equilibrium truss: nodes ARE the nine cells -->
+      <svg class="ve" viewBox="0 0 6 6" preserveAspectRatio="none" aria-hidden="true" id="ve"></svg>
+      <div class="hinge" title="vector-equilibrium hinge" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 22 22"><g stroke="#2c6e7a" stroke-width="1.3" fill="none">
+          <circle cx="11" cy="11" r="9"/><circle cx="11" cy="11" r="2.4" fill="#2c6e7a"/>
+          <path d="M11 2v18M2 11h18M4.6 4.6l12.8 12.8M17.4 4.6 4.6 17.4"/></g></svg>
+      </div>
+      <div class="grid" id="grid"></div>
+    </div>
+
+    <div class="margin east">East ▸ Tools</div>
+  </div>
+
+  <!-- bottom coordinate ruler -->
+  <div class="ruler bottom" aria-hidden="true">
+    <span class="end">W · def</span>
+    <div class="ticks" id="ruler-bot"></div>
+    <span class="end r">tool · E</span>
+  </div>
+</div>
+
+<!-- ============ the single-square deep-dive canvas ============ -->
+<div class="deep" id="deep" role="dialog" aria-modal="true" aria-labelledby="deep-title">
+  <div class="deep-card">
+    <div class="deep-head" id="deep-head">
+      <span class="dglyph" id="deep-glyph">●</span>
+      <div>
+        <div class="drole" id="deep-role">ROLE</div>
+        <h2 id="deep-title">Title</h2>
+      </div>
+      <span class="daddr" id="deep-addr">[5] centre</span>
+      <button class="deep-close" id="deep-close" aria-label="Close deep dive">×</button>
+    </div>
+    <div class="deep-body" id="deep-body"></div>
+    <div class="deep-nav">
+      <button id="deep-prev">◂ Prev cell</button>
+      <span class="label" id="deep-label">general → special</span>
+      <button id="deep-next">Next cell ▸</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ------------------------------------------------------------------
+   The nine cells, in 3x3 reading order (row-major). Each carries its
+   geometric ADDRESS (col -3..+3 left/right of centre, row N/M/S),
+   its ROLE, a glance summary, and a full deep-dive canvas.
+   Scrolling the single-column mobile view top->bottom traverses the
+   abstraction gradient: principles (top row) -> special cases (bottom).
+   ------------------------------------------------------------------ */
+var K = {
+  marseille:[["Heat-stress (base → +trees)","79.1% → 83.0%"],["Mean UTCI","27.3 → 27.5 °C"],["EO tree-cover","1.1%"]],
+  cork:[["Heat-stress (base → +trees)","0% → 0%"],["Mean UTCI","15.6 → 15.2 °C"],["Thermal-zone diversity","+7.6%"],["EO tree-cover","17.2%"]],
+  rome:[["Heat-stress (base → +trees)","96.9% → 97.6%"],["Mean UTCI","30.0 → 30.1 °C"],["City trees / species","757 / 33"],["EO tree-cover","31.2%"]]
+};
+
+var CELLS = [
+  /* ---------------- TOP ROW — generalised principle ---------------- */
+  { id:"lineage", addr:"NW", coord:"[−3·N]", role:"Lineage", region:"r-corner",
+    glyph:"🜨", title:"Lineage", one:"SCI-Arc → Fuller → syncad → AT6012. Why position carries meaning.",
+    dh:"#3b3f8f",
+    body:`<h4>The seminal law</h4>
+      <p>This figure is a <b>synergetic nine-square</b>, an organising frame developed at
+      <b>SCI-Arc</b> and presented at the <b>Buckminster Fuller Institute</b> (c.1994–95).
+      A 3×3 indexed by <i>left/right · top/bottom · odd/even</i>, where <b>position is address</b>
+      and <b>position carries meaning</b> — not decoration, not a flat list.</p>
+      <h4>The reference chain</h4>
+      <ul>
+        <li><b>Seminal:</b> <a href="https://syncad.org/Handbook/" target="_blank" rel="noopener">syncad.org/Handbook</a>
+            — an HTML frameset that <i>is</i> a literal nine-square (header/footer/left/right margins + body),
+            a periodic-table matrix of square tiles with a numeric ruler on both edges. "SYNERGY 共生" at the heart.</li>
+        <li><b>Recent miss:</b> energetic.curricula.dev — Fuller vector-equilibrium geometry as <i>wallpaper</i>, not the grid.</li>
+        <li><b>Recent miss:</b> design.curricula.dev — geometry dropped entirely; a flat sitemap.</li>
+        <li><b>Here:</b> the geometry <i>is</i> the navigation grid again.</li>
+      </ul>
+      <h4>The CER lineage it carries</h4>
+      <p>community-engagement.eu (Campus Engage / National Forum Ireland) → SPACE Erasmus+ → ENGAGE.
+      Boyer's Scholarship of Engagement; the Engagement Spectrum; reciprocity as the ethical core.</p>
+      <p class="callout">The vector equilibrium (cuboctahedron): 12 vertices around 1 nucleus, all edges equal —
+      Fuller's figure of <i>equilibrium</i>. Its 12 ruler-ticks edge this frame.</p>` },
+
+  { id:"principles", addr:"N", coord:"[0·N]", role:"Generalised principle", region:"r-north",
+    glyph:"⚖", title:"The regenerative law", one:"Trees are not automatically regenerative. Placement, density & geometry decide.",
+    dh:"#3b3f8f",
+    body:`<h4>The principle</h4>
+      <p><b>Adding canopy is not automatically regenerative.</b> The same intervention that cools an
+      open plaza can <i>trap</i> radiant heat and cut ventilation in a dense street canyon. Skill is
+      <b>right species, right place, right density</b> — not "more trees".</p>
+      <h4>UTCI thermal bands</h4>
+      <table><thead><tr><th>UTCI (°C)</th><th>Stress category</th></tr></thead><tbody>
+        <tr><td>&gt; 38</td><td>Very strong / extreme heat stress</td></tr>
+        <tr><td>26 – 38</td><td>Moderate–strong heat stress</td></tr>
+        <tr><td>9 – 26</td><td>No thermal stress (comfort)</td></tr>
+        <tr><td>&lt; 9</td><td>Cold stress</td></tr>
+      </tbody></table>
+      <h4>How heat-stress % is measured</h4>
+      <div class="eq">heat-stress&nbsp;% &nbsp;=&nbsp; <b>count(UTCI&gt;26 °C)</b> &nbsp;/&nbsp; count(valid cells) &nbsp;×&nbsp;100</div>
+      <p class="callout">Measurement honesty: canopy <i>masks</i> the grid cells beneath it, so a baseline-vs-intervention
+      percentage isn't strictly apples-to-apples. The probe reports this rather than sanding it off.</p>
+      <h4>Thermal Assembly Complexity Index</h4>
+      <p>Beyond a single mean, the probe scores the <i>diversity</i> of thermal zones (TACI) — a richer,
+      more navigable microclimate is itself a regenerative quality.</p>` },
+
+  { id:"recipe", addr:"NE", coord:"[+3·N]", role:"Recipe", region:"r-corner",
+    glyph:"⛭", title:"Recipe", one:"Reproduce it yourself — preview-first, then run a city at €0 risk.",
+    dh:"#3b3f8f",
+    body:`<h4>The generalised method (self-serve)</h4>
+      <ol class="ladder">
+        <li><b>Install</b> — <code>pip install -r requirements.txt</code> (pins infrared-sdk 0.4.9).</li>
+        <li><b>Key</b> — copy <code>.env.example</code> → <code>.env</code>, set <code>INFRARED_API_KEY</code>.</li>
+        <li><b>Verify</b> — <code>python verify_setup.py</code> (no quota cost).</li>
+        <li><b>Preview</b> — <code>client.preview_area(polygon, analysis_type=...)</code>: tiling, <b>no jobs, no billing</b>.</li>
+        <li><b>Run</b> — <code>python scorecard.py --run --max-tiles N</code> submits the <i>billable</i> area job.</li>
+      </ol>
+      <div class="eq">Cost guard: <b>the scenario, not the tap, is the billable unit.</b><br>
+      Default (no <b>--run</b>) only previews. Never launch a billable run without intent.</div>
+      <h4>Enrichment ladder</h4>
+      <p>The SDK's vegetation is attribute-poor (null species). Climb the ladder to enrich it:</p>
+      <ol class="ladder">
+        <li>SDK vegetation (geometry, null attributes)</li>
+        <li>City open data — Rome WFS street-trees (species!), Marseille ODS parks, Cork CKAN/TPO</li>
+        <li>Earth-observation — ESA WorldCover land-cover, Sentinel-2 NDVI</li>
+        <li>Roboflow detection on aerial tiles</li>
+        <li>GUS.earth per-tree species + growth simulation</li>
+      </ol>
+      <p><a class="btn" href="api-guide.html">Open the full Data &amp; API guide ▸</a>
+         <a class="btn alt" href="https://github.com/ccae-lab/at6012-microclimate-probe" target="_blank" rel="noopener">Source on GitHub</a></p>` },
+
+  /* ---------------- MIDDLE ROW — definitions · PROBE · tools ---------------- */
+  { id:"definitions", addr:"W", coord:"[−3·M]", role:"Definitions", region:"r-west",
+    glyph:"📖", title:"The lexicon", one:"UTCI · heat-stress % · TACI · vector equilibrium · twining.",
+    dh:"#2c6e7a",
+    body:`<h4>Microclimate</h4>
+      <ul>
+        <li><b>UTCI</b> — Universal Thermal Climate Index (°C): perceived temperature integrating air temp,
+          radiant heat, humidity and wind.</li>
+        <li><b>Heat-stress %</b> — share of valid grid cells with UTCI &gt; 26 °C.</li>
+        <li><b>TACI</b> — Thermal Assembly Complexity Index: diversity of thermal zones across the tile.</li>
+        <li><b>WorldCover classes</b> — ESA land-cover: Built-up, Tree cover, Grassland, Water, Cropland, Bare/sparse.</li>
+        <li><b>Preview vs Run</b> — <i>preview</i> tiles a polygon for free; <i>run</i> submits a billable simulation job.</li>
+      </ul>
+      <h4>Synergetic geometry</h4>
+      <ul>
+        <li><b>Vector equilibrium (VE)</b> — Fuller's cuboctahedron: 12 vertices around 1 nucleus, all edges equal.
+          The figure of equilibrium; the truss behind this grid.</li>
+        <li><b>Jitterbug</b> — the VE's transformation through icosa/octa/tetra as it contracts; equilibrium in motion.</li>
+        <li><b>Twining (相生 / mutual arising)</b> — interlacing the general (above) and the special (below)
+          <i>through</i> the centre. Warp &amp; weft of principle and particular.</li>
+        <li><b>Address</b> — a cell's <i>position</i> (left/right · top/bottom · odd/even) is its meaning.</li>
+      </ul>` },
+
+  { id:"probe", addr:"C", coord:"[0·M]", role:"The live instance", region:"r-centre", centre:true,
+    glyph:"🛰", title:"The live Probe", one:"The nuclear vertex — between principle (above) and case (below).",
+    dh:"#0f1b2a",
+    body:`<p>The centre always sits <b>between</b> principle (the row above) and case (the row below) —
+      this is the twining. Here it is the <b>live Microclimate Probe</b>: pick a location and variables,
+      get UTCI / wind / solar over the infrared.city SDK.</p>
+      <iframe class="embedbox" src="tool.html" title="Microclimate Probe tool" loading="lazy"></iframe>
+      <p style="margin-top:12px">
+        <a class="btn" href="tool.html" target="_blank" rel="noopener">Open the Probe full-screen ▸</a>
+        <a class="btn alt" href="index.html">Learning module</a></p>` },
+
+  { id:"tools", addr:"E", coord:"[+3·M]", role:"Tools", region:"r-east",
+    glyph:"🧰", title:"The instruments", one:"infrared-sdk requests, sub-services & the cost guard.",
+    dh:"#a23b2e",
+    body:`<h4>Model requests (infrared-sdk 0.4.9)</h4>
+      <p><span class="pill">UtciModelRequest</span><span class="pill">WindModelRequest</span>
+         <span class="pill">SolarModelRequest</span><span class="pill">SolarRadiationModelRequest</span>
+         <span class="pill">SvfModelRequest</span><span class="pill">PwcModelRequest</span></p>
+      <h4>Run model</h4>
+      <div class="eq">client.<b>run_area_and_wait</b>(request, polygon, vegetation=…, on_progress=…)<br>
+        → AreaResult( .merged_grid &nbsp;numpy, NaN outside polygon&nbsp;· .bounds · legend )</div>
+      <p><b>Submit-and-run</b>: billable. Grid resolution — wind 256 m, solar/thermal 512 m.</p>
+      <h4>Free preview</h4>
+      <div class="eq">client.<b>preview_area</b>(polygon, analysis_type=…) &nbsp;— tiling only, <b>no jobs, no billing</b></div>
+      <h4>Sub-services</h4>
+      <ul>
+        <li><code>client.vegetation.get_area(polygon)</code> → real trees (<code>.features</code>, <code>.total_trees</code>)</li>
+        <li><code>client.weather.get_weather_file_from_location(lat=, lon=)</code></li>
+      </ul>
+      <p><a class="btn" href="tool.html">Open the Probe controls ▸</a>
+         <a class="btn alt" href="api-guide.html">Data &amp; API guide</a></p>` },
+
+  /* ---------------- BOTTOM ROW — special-case scenario ---------------- */
+  { id:"counter", addr:"SW", coord:"[−3·S]", role:"Honest counter-case", region:"r-corner",
+    glyph:"🜂", title:"When trees backfire", one:"Marseille: heat-stress 79.1% → 83.0% — the canopy made it worse.",
+    dh:"#a23b2e",
+    body:`<div class="callout honest"><b>The honest finding — kept, not sanded off.</b>
+      In an enlarged dense Marseille tile, adding canopy moved heat-stress
+      <b>79.1% → 83.0%</b> — the wrong direction.</div>
+      <h4>Why a canyon backfires</h4>
+      <ul>
+        <li><b>Radiant trapping</b> — canopy over a narrow canyon re-radiates long-wave heat downward instead of letting it escape to sky.</li>
+        <li><b>Lost ventilation</b> — crowns block the channelled airflow that was the canyon's one cooling mechanism.</li>
+        <li><b>Measurement artefact</b> — canopy masks grid cells, so baseline-vs-intervention % aren't strictly apples-to-apples.</li>
+      </ul>
+      <table><thead><tr><th>Marseille — enlarged</th><th>Value</th></tr></thead><tbody>
+        <tr><td>Heat-stress (base → +trees)</td><td class="worse">79.1% → 83.0% (worse)</td></tr>
+        <tr><td>Mean UTCI</td><td>27.3 → 27.5 °C</td></tr>
+        <tr><td>EO tree-cover</td><td>1.1%</td></tr>
+      </tbody></table>
+      <p class="callout honest">In the geo-game this is the <b>loss condition</b>: naive dense-canyon planting
+      returns a negative score — the "Maladaptive" verdict. The tension <i>is</i> the gameplay.</p>` },
+
+  { id:"cases", addr:"S", coord:"[0·S]", role:"Special-case scenarios", region:"r-south",
+    glyph:"🏙", title:"Three cities", one:"Marseille · Cork · Rome — one honest finding, three climates.",
+    dh:"#b07a16",
+    body:`<h4>The case studies (from kpis.json)</h4>
+      <table><thead><tr><th>City</th><th>Heat-stress base → +trees</th><th>Headline</th></tr></thead><tbody>
+        <tr><td><b>Marseille</b></td><td class="worse">79.1% → 83.0%</td><td>Dense + Mediterranean — canopy backfires</td></tr>
+        <tr><td><b>Cork</b></td><td class="better">0% → 0%</td><td>Mild maritime — +7.6% thermal-zone diversity</td></tr>
+        <tr><td><b>Rome</b></td><td>96.9% → 97.6%</td><td>757 city trees / 33 species — provenance proof</td></tr>
+      </tbody></table>
+      <p>Rome injects <b>757 real street-trees across 33 species</b> from a 13,481-tree municipal register
+      (Municipio VIII) — a demonstration of <b>provenance</b>, not of a delta.</p>
+      <h4>Open the scorecards</h4>
+      <p><a class="btn" href="scorecard.html">Marseille</a>
+         <a class="btn" href="scorecard_cork.html">Cork</a>
+         <a class="btn" href="scorecard_rome.html">Rome</a>
+         <a class="btn alt" href="timeseries.html">Diurnal time series</a></p>
+      <h4>The praxis — a geo-game</h4>
+      <p>The north star: a tree-surgeon, SimCity-like geo-game over real microclimate simulation.
+      Place, grow and tend an urban forest; the honest finding is the core tension. Play is
+      <b>choice-based</b> over pre-baked scenarios (no billable backend on the play path).</p>` },
+
+  { id:"exemplar", addr:"SE", coord:"[+3·S]", role:"Exemplar", region:"r-corner",
+    glyph:"🌳", title:"Right species, right place", one:"Cork: +7.6% thermal-zone diversity at 0% heat-stress — the win.",
+    dh:"#1e6b3a",
+    body:`<div class="callout win"><b>The exemplary win.</b> In maritime Cork, well-placed canopy held
+      heat-stress at <b>0%</b> while lifting <b>thermal-zone diversity +7.6%</b> — a richer, more navigable microclimate.</div>
+      <h4>Cork — Nano Nagle Place</h4>
+      <table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>
+        <tr><td>Heat-stress (base → +trees)</td><td class="better">0% → 0%</td></tr>
+        <tr><td>Mean UTCI</td><td>15.6 → 15.2 °C (cooler)</td></tr>
+        <tr><td>Thermal-zone diversity</td><td class="better">+7.6%</td></tr>
+        <tr><td>EO tree-cover</td><td>17.2%</td></tr>
+      </tbody></table>
+      <h4>The skill being modelled</h4>
+      <p>The exemplar and the counter-case (SW) are the same move with different <i>placement</i>:
+      open fabric + maritime air rewards canopy; dense canyon + Mediterranean radiance punishes it.
+      In the geo-game this is the <b>win condition</b> — mastery = matching species &amp; density to the street's geometry and climate.</p>
+      <p><a class="btn" href="scorecard_cork.html">Open the Cork scorecard ▸</a></p>` }
+];
+
+/* ---- the ruler: 12 ticks, odd/even cadence, W(cool)/E(warm), centre axis ---- */
+function buildRuler(el){
+  var html="";
+  for(var i=1;i<=12;i++){
+    var cls="tick";
+    cls += (i%2) ? " odd" : "";
+    cls += (i<=6) ? " cool" : " warm";
+    if(i===6||i===7) cls += " axis";
+    var lab = (i<=6) ? (i-7) : (i-6);     // -6..-1 | +1..+6  (left/right address)
+    html += '<span class="'+cls+'">'+lab+'</span>';
+  }
+  el.innerHTML=html;
+}
+buildRuler(document.getElementById("ruler-top"));
+buildRuler(document.getElementById("ruler-bot"));
+
+/* ---- the vector-equilibrium truss linking the nine cell-nodes ---- */
+(function(){
+  var ve=document.getElementById("ve");
+  // node centres on the 6x6 grid: cols/rows at 1,3,5
+  var P={NW:[1,1],N:[3,1],NE:[5,1],W:[1,3],C:[3,3],E:[5,3],SW:[1,5],S:[3,5],SE:[5,5]};
+  var ring=["NW","N","NE","E","SE","S","SW","W"];           // outer octagon
+  var svg="";
+  // outer ring
+  for(var i=0;i<ring.length;i++){
+    var a=P[ring[i]], b=P[ring[(i+1)%ring.length]];
+    svg+='<line x1="'+a[0]+'" y1="'+a[1]+'" x2="'+b[0]+'" y2="'+b[1]+'"/>';
+  }
+  // 8 spokes to the nucleus + long diagonals already covered by spokes
+  ring.forEach(function(k){var a=P[k];svg+='<line class="spoke" x1="3" y1="3" x2="'+a[0]+'" y2="'+a[1]+'"/>';});
+  // nodes
+  Object.keys(P).forEach(function(k){var a=P[k];
+    var cls=(k==="C")?"nucleus":"node";var r=(k==="C")?0.22:0.13;
+    svg+='<circle class="'+cls+'" cx="'+a[0]+'" cy="'+a[1]+'" r="'+r+'"/>';});
+  ve.innerHTML=svg;
+})();
+
+/* ---- render the nine cells ---- */
+var grid=document.getElementById("grid");
+CELLS.forEach(function(c,idx){
+  var el=document.createElement(c.centre?"div":"div");
+  el.className="cell "+c.region+(c.centre?" centre":"");
+  el.tabIndex=0; el.setAttribute("role","button");
+  el.setAttribute("aria-label",c.role+": "+c.title);
+  el.dataset.idx=idx;
+  var odd=(idx%2===0)?" odd":"";   // odd/even cadence on the address chip
+  el.innerHTML=
+    '<span class="addr'+odd+'">'+c.coord+'</span>'+
+    '<div class="role">'+c.role+'</div>'+
+    '<div class="glyph">'+c.glyph+'</div>'+
+    '<h3>'+c.title+'</h3>'+
+    '<p class="one">'+c.one+'</p>'+
+    '<div class="more">deep dive</div>';
+  el.addEventListener("click",function(){openDeep(idx);});
+  el.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();openDeep(idx);}});
+  grid.appendChild(el);
+});
+
+/* ---- deep-dive canvas ---- */
+var deep=document.getElementById("deep"),cur=-1;
+function openDeep(i){
+  cur=i; var c=CELLS[i];
+  if(location.hash!=="#"+c.id){ history.replaceState(null,"","#"+c.id); }
+  document.getElementById("deep-glyph").textContent=c.glyph;
+  document.getElementById("deep-role").textContent=c.role;
+  document.getElementById("deep-title").textContent=c.title;
+  document.getElementById("deep-addr").textContent="["+c.addr+"] "+c.coord;
+  document.getElementById("deep-head").style.setProperty("--dh",c.dh);
+  document.getElementById("deep-body").innerHTML=c.body;
+  document.getElementById("deep-body").scrollTop=0;
+  deep.classList.add("open");
+  document.body.style.overflow="hidden";
+  document.getElementById("deep-close").focus();
+}
+function closeDeep(){deep.classList.remove("open");document.body.style.overflow="";
+  if(location.hash){ history.replaceState(null,"",location.pathname+location.search); }
+  if(cur>=0){var t=grid.children[cur];if(t)t.focus();}}
+function step(d){var n=(cur+d+CELLS.length)%CELLS.length;openDeep(n);}
+document.getElementById("deep-close").addEventListener("click",closeDeep);
+document.getElementById("deep-prev").addEventListener("click",function(){step(-1);});
+document.getElementById("deep-next").addEventListener("click",function(){step(1);});
+deep.addEventListener("click",function(e){if(e.target===deep)closeDeep();});
+document.addEventListener("keydown",function(e){
+  if(!deep.classList.contains("open"))return;
+  if(e.key==="Escape")closeDeep();
+  else if(e.key==="ArrowRight")step(1);
+  else if(e.key==="ArrowLeft")step(-1);
+});
+
+/* ---- live "how many squares" indicator (the responsive law, made visible) ---- */
+function cols(){return getComputedStyle(grid).gridTemplateColumns.split(" ").length;}
+function updateCount(){
+  var n=cols();
+  var word = n>=3 ? "the full nine-square" : (n===2 ? "two squares (landscape)" : "one square (portrait)");
+  document.getElementById("count").textContent="▦ "+word;
+}
+updateCount();
+window.addEventListener("resize",updateCount);
+
+/* ---- shareable deep links: nine-square.html#cork opens that cell ---- */
+function openByHash(){
+  var h=(location.hash||"").replace("#","");
+  if(!h)return;
+  for(var i=0;i<CELLS.length;i++){ if(CELLS[i].id===h){ openDeep(i); return; } }
+}
+openByHash();
+window.addEventListener("hashchange",openByHash);
+</script>
+
+<script src="chrome.js" defer></script>
+</body>
+</html>

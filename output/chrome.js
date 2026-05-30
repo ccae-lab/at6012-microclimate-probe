@@ -4,6 +4,7 @@
    curricula.dev triad. Include on every page:  <script src="chrome.js" defer></script> */
 (function () {
   var PAGES = [
+    ["nine-square.html", "▦ Twining"],
     ["tool.html", "🛰 Probe tool"],
     ["index.html", "Learning module"],
     ["scorecard.html", "Marseille"],
