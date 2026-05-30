@@ -250,7 +250,14 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, var(--primary) 0%, #1a4d2e 100%);
+            /* Regenerative thermal field background. Tune each layer's opacity here. */
+            --bg-thermal: 0.60;   /* warm and cool heat blooms */
+            --bg-isotherm: 0.42;  /* temperature contour lines */
+            --bg-grid: 0.16;      /* faint urban street grid */
+            --bg-canopy: 0.34;    /* scattered tree canopy */
+            --bg-geo: 0.14;       /* vector-equilibrium echo */
+            --bg-scrim: 0.58;     /* central scrim that keeps the title legible */
+            background: linear-gradient(150deg, #0c2228 0%, #102a2a 42%, #0c241c 100%);
             color: white;
             padding: calc(73px + var(--space-xl)) var(--space-md) var(--space-xl);
             overflow: hidden;
@@ -259,12 +266,19 @@
         .hero::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse"><path d="M 100 0 L 0 0 0 100" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)" /></svg>');
-            opacity: 0.5;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background: radial-gradient(ellipse at center, transparent 52%, rgba(4,12,15,0.55) 100%);
+        }
+
+        .hero-collage {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
         }
         
         .hero-content {
@@ -1135,6 +1149,91 @@
     
     <!-- Hero Section -->
     <section class="hero" id="home">
+        <svg class="hero-collage" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+          <defs>
+            <radialGradient id="rtWarm" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#ff7a3d"/><stop offset="48%" stop-color="#e6502f"/><stop offset="100%" stop-color="#e6502f" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="rtWarm2" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#ffb347"/><stop offset="100%" stop-color="#ffb347" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="rtCool" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#2fd0e6"/><stop offset="50%" stop-color="#0096c7"/><stop offset="100%" stop-color="#0096c7" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="rtCool2" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#48cae4"/><stop offset="100%" stop-color="#0077b6" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="rtLeaf" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#7bc47f"/><stop offset="62%" stop-color="#3a7d44"/><stop offset="100%" stop-color="#3a7d44" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="rtScrim" cx="50%" cy="46%" r="62%">
+              <stop offset="0%" stop-color="#06141a" stop-opacity="0.92"/><stop offset="55%" stop-color="#06141a" stop-opacity="0.45"/><stop offset="100%" stop-color="#06141a" stop-opacity="0"/>
+            </radialGradient>
+            <filter id="rtSoft" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="46"/></filter>
+            <filter id="rtSoft2" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="15"/></filter>
+            <pattern id="rtStreets" width="132" height="132" patternUnits="userSpaceOnUse">
+              <path d="M132 0H0V132" fill="none" stroke="#cfe9ee" stroke-width="1"/>
+            </pattern>
+          </defs>
+
+          <!-- thermal blooms: hot zones warm, cooled zones blue -->
+          <g style="opacity:var(--bg-thermal)" filter="url(#rtSoft)">
+            <ellipse cx="300" cy="240" rx="380" ry="320" fill="url(#rtWarm)"/>
+            <ellipse cx="1240" cy="720" rx="430" ry="360" fill="url(#rtWarm)"/>
+            <ellipse cx="1120" cy="150" rx="260" ry="240" fill="url(#rtWarm2)"/>
+            <ellipse cx="1330" cy="300" rx="360" ry="320" fill="url(#rtCool)"/>
+            <ellipse cx="430" cy="730" rx="340" ry="300" fill="url(#rtCool)"/>
+            <ellipse cx="800" cy="520" rx="330" ry="290" fill="url(#rtCool2)"/>
+          </g>
+
+          <!-- isotherms: temperature contour rings around the bloom centres -->
+          <g style="opacity:var(--bg-isotherm)" fill="none" stroke-width="1.4">
+            <g stroke="#ffb38a">
+              <ellipse cx="300" cy="240" rx="120" ry="100"/><ellipse cx="300" cy="240" rx="192" ry="160"/>
+              <ellipse cx="300" cy="240" rx="266" ry="222"/><ellipse cx="300" cy="240" rx="346" ry="290"/>
+            </g>
+            <g stroke="#9fe6f2">
+              <ellipse cx="1330" cy="300" rx="110" ry="95"/><ellipse cx="1330" cy="300" rx="182" ry="156"/>
+              <ellipse cx="1330" cy="300" rx="256" ry="220"/><ellipse cx="1330" cy="300" rx="338" ry="290"/>
+            </g>
+            <g stroke="#ffb38a">
+              <ellipse cx="1240" cy="720" rx="132" ry="112"/><ellipse cx="1240" cy="720" rx="212" ry="178"/>
+              <ellipse cx="1240" cy="720" rx="300" ry="252"/>
+            </g>
+          </g>
+
+          <!-- faint urban street grid -->
+          <g style="opacity:var(--bg-grid)">
+            <rect x="0" y="0" width="1600" height="900" fill="url(#rtStreets)"/>
+            <line x1="0" y1="450" x2="1600" y2="450" stroke="#cfe9ee" stroke-width="1.6"/>
+            <line x1="800" y1="0" x2="800" y2="900" stroke="#cfe9ee" stroke-width="1.6"/>
+          </g>
+
+          <!-- scattered tree canopy -->
+          <g style="opacity:var(--bg-canopy)" filter="url(#rtSoft2)" fill="url(#rtLeaf)">
+            <circle cx="180" cy="640" r="26"/><circle cx="250" cy="700" r="18"/><circle cx="120" cy="560" r="16"/>
+            <circle cx="520" cy="800" r="30"/><circle cx="600" cy="760" r="20"/><circle cx="470" cy="560" r="14"/>
+            <circle cx="760" cy="820" r="22"/><circle cx="900" cy="800" r="16"/><circle cx="1050" cy="840" r="28"/>
+            <circle cx="1180" cy="790" r="18"/><circle cx="1320" cy="820" r="24"/><circle cx="1430" cy="760" r="16"/>
+            <circle cx="1500" cy="640" r="20"/><circle cx="1380" cy="560" r="14"/><circle cx="980" cy="300" r="16"/>
+            <circle cx="1080" cy="360" r="12"/><circle cx="150" cy="200" r="14"/><circle cx="70" cy="330" r="18"/>
+            <circle cx="700" cy="180" r="12"/><circle cx="560" cy="120" r="16"/><circle cx="640" cy="540" r="12"/>
+            <circle cx="860" cy="660" r="18"/>
+          </g>
+
+          <!-- vector-equilibrium echo: a quiet nod to the synergetic geometry -->
+          <g style="opacity:var(--bg-geo)" stroke="#d7e8ec" stroke-width="1.2" fill="none">
+            <polygon points="1330,600 1286,706 1180,750 1074,706 1030,600 1074,494 1180,450 1286,494"/>
+            <path d="M1180 600 1330 600M1180 600 1286 706M1180 600 1180 750M1180 600 1074 706M1180 600 1030 600M1180 600 1074 494M1180 600 1180 450M1180 600 1286 494"/>
+            <circle cx="1180" cy="600" r="9" fill="#d7e8ec"/>
+            <polygon points="500,470 465,555 380,590 295,555 260,470 295,385 380,350 465,385"/>
+            <path d="M380 470 500 470M380 470 465 555M380 470 380 590M380 470 295 555M380 470 260 470M380 470 295 385M380 470 380 350M380 470 465 385"/>
+            <circle cx="380" cy="470" r="7" fill="#d7e8ec"/>
+          </g>
+
+          <!-- central scrim for title legibility -->
+          <rect x="0" y="0" width="1600" height="900" fill="url(#rtScrim)" style="opacity:var(--bg-scrim)"/>
+        </svg>
         <div class="hero-content" data-aos="fade-up">
             <h1 class="hero-title">Regenerative Thermal Analysis with infrared.city</h1>
             <p class="hero-subtitle">
