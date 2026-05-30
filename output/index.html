@@ -1591,8 +1591,8 @@ geojson_path = exporter.<code class="token-function">export_geojson</code>(
 
             <div style="background:#eafaf1;border:1px solid #abebc6;border-left:5px solid #27ae60;border-radius:10px;padding:16px 20px;margin:0 auto 28px;max-width:900px">
                 <strong style="color:#1e8449">Updated for infrared-sdk 0.4.9.</strong>
-                Modules&nbsp;1&ndash;6 use the original hand-rolled REST client (now <em>legacy</em>: fetch results
-                by <code>simulation_id</code>). <strong>Modules&nbsp;7&ndash;8</strong> teach the current SDK &mdash;
+                Modules&nbsp;1,6 use the original hand-rolled REST client (now <em>legacy</em>: fetch results
+                by <code>simulation_id</code>). <strong>Modules&nbsp;7,8</strong> teach the current SDK ,
                 <em>submit-and-run</em> over a polygon, multi-physics wind/solar/UTCI, and the live
                 Regenerative Microclimate Scorecard.
             </div>
@@ -1879,7 +1879,7 @@ geojson_path = exporter.<code class="token-function">export_geojson</code>(
                     <div class="module-header" onclick="toggleModule(7)">
                         <div class="module-header-content">
                             <div class="module-number" style="color:#27ae60">MODULE 7 &middot; NEW</div>
-                            <h3 class="module-title">infrared-sdk 0.4.9 &mdash; Submit &amp; Run</h3>
+                            <h3 class="module-title">infrared-sdk 0.4.9, Submit &amp; Run</h3>
                             <div class="module-meta">
                                 <span><i class="bi bi-clock"></i> 25 minutes</span>
                                 <span><i class="bi bi-graph-up"></i> Core update</span>
@@ -1893,7 +1893,7 @@ geojson_path = exporter.<code class="token-function">export_geojson</code>(
                         <div class="module-body">
                             <p class="module-description">
                                 The official <code>infrared-sdk</code> replaces the hand-rolled REST client of
-                                Modules&nbsp;1&ndash;6. The mental model has changed: instead of fetching results
+                                Modules&nbsp;1,6. The mental model has changed: instead of fetching results
                                 from a pre-existing simulation by <code>simulation_id</code>, you now
                                 <strong>submit a geometry and an analysis request, and the SDK tiles the area,
                                 runs the jobs, polls them, and returns a merged NumPy grid</strong>. The API key
@@ -1929,7 +1929,7 @@ grid = area.merged_grid          # 2-D NumPy array, NaN outside the polygon</cod
                             <div class="note-box" style="background:#fff7e6;border:1px solid #f0d9a7;border-radius:8px;padding:12px 14px;margin-top:14px;font-size:14px">
                                 <strong>Gotcha:</strong> <code>thermal-comfort-index</code> rejects a request with
                                 <em>"At least one of [geometries, vegetation] must contain geometry data"</em> if you
-                                run it on a bare tile &mdash; always inject buildings (and/or vegetation) and supply
+                                run it on a bare tile, always inject buildings (and/or vegetation) and supply
                                 the weather arrays.
                             </div>
                             <div class="module-actions">
@@ -1959,10 +1959,10 @@ grid = area.merged_grid          # 2-D NumPy array, NaN outside the polygon</cod
                     <div class="module-content">
                         <div class="module-body">
                             <p class="module-description">
-                                The capstone runs all three focus analyses &mdash; <strong>UTCI, wind and solar</strong>
-                                &mdash; over one site and compares a <strong>baseline</strong> (buildings only) against a
+                                The capstone runs all three focus analyses, <strong>UTCI, wind and solar</strong>
+                               , over one site and compares a <strong>baseline</strong> (buildings only) against a
                                 <strong>regenerative intervention</strong> (real tree canopy injected via the SDK). Each
-                                result grid is scored with the regenerative metrics from Modules&nbsp;3&ndash;4
+                                result grid is scored with the regenerative metrics from Modules&nbsp;3,4
                                 (heat-stress&nbsp;%, Thermal Assembly Complexity Index), now computed grid-native.
                             </p>
                             <div class="learning-objectives">
@@ -1975,7 +1975,7 @@ grid = area.merged_grid          # 2-D NumPy array, NaN outside the polygon</cod
                                 </ul>
                             </div>
                             <p style="font-size:14px;margin:10px 0 4px"><strong>Live result (Marseille, Vieux-Port):</strong>
-                            buildings&nbsp;968, trees&nbsp;579 &mdash; adding canopy moved heat-stress area
+                            buildings&nbsp;968, trees&nbsp;579, adding canopy moved heat-stress area
                             92.1%&nbsp;&rarr;&nbsp;91.3% and assembly complexity&nbsp;+6.3%.</p>
                             <div class="module-actions">
                                 <a href="scorecard.html" class="btn-module">
