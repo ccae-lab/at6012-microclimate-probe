@@ -20,6 +20,16 @@
   // Submission deadline: Sunday 31 May 2026, end of day (CEST = UTC+2).
   var DEADLINE = new Date("2026-05-31T23:59:59+02:00");
 
+  // CCAE mark — vector-traced from the official Cork Centre for Architectural
+  // Education logo (faceted 7-gon outline + interior fold facets). Inherits
+  // currentColor so it sits on dark (banner) and light contexts alike.
+  var CCAE =
+    '<svg class="ir-ccae" viewBox="0 0 180 180" fill="none" stroke="currentColor" ' +
+    'stroke-width="9" stroke-linejoin="round" stroke-linecap="round" role="img" ' +
+    'aria-label="Cork Centre for Architectural Education">' +
+    '<path d="M18 122 28 59 100 17 170 70 173 120 150 162 58 160Z"/>' +
+    '<path d="M143 79 84 158"/><path d="M155 100 100 160"/></svg>';
+
   var css = document.createElement("style");
   css.textContent = [
     ".ir-banner{position:relative;z-index:99999;background:#0f1b2a;color:#eaf0f6;",
@@ -40,7 +50,16 @@
     ".ir-footer h4{color:#fff;font-size:13px;text-transform:uppercase;letter-spacing:.05em;margin:0 0 10px}",
     ".ir-footer a{color:#ffd9b3;text-decoration:none}.ir-footer a:hover{text-decoration:underline}",
     ".ir-footer ul{list-style:none;padding:0;margin:0}.ir-footer li{margin:4px 0}",
-    ".ir-footer .ir-bottom{border-top:1px solid #24323f;padding:14px 24px;text-align:center;color:#8aa0b3;font-size:12px}"
+    ".ir-footer .ir-bottom{border-top:1px solid #24323f;padding:14px 24px;text-align:center;color:#8aa0b3;font-size:12px}",
+    ".ir-ccae{height:22px;width:auto;flex:0 0 auto;color:#ffd9b3}",
+    ".ir-banner .ir-brandlink{display:inline-flex;align-items:center;gap:9px;color:#fff;text-decoration:none}",
+    ".ir-banner .ir-brandlink:hover{text-decoration:none}",
+    ".ir-credits{border-top:1px solid #24323f;background:#0c1622}",
+    ".ir-credits .ir-cwrap{max-width:1000px;margin:0 auto;padding:18px 24px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}",
+    ".ir-credits .ir-ccae{height:46px;color:#eaf0f6}",
+    ".ir-credits .ir-ctext{flex:1 1 320px;min-width:260px}",
+    ".ir-credits p{margin:3px 0;color:#c7d3df;font:12.5px/1.55 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}",
+    ".ir-credits strong{color:#fff}.ir-credits a{color:#ffd9b3}"
   ].join("");
   document.head.appendChild(css);
 
@@ -60,7 +79,8 @@
   var banner = document.createElement("div");
   banner.className = "ir-banner";
   banner.innerHTML =
-    '<span class="ir-brand">🔥 infrared.city Buildathon 2026</span>' +
+    '<a class="ir-brandlink" href="https://www.ucc.ie/en/at6012/" target="_blank" rel="noopener" title="AT6012 · Cork Centre for Architectural Education">' +
+      CCAE + '<span class="ir-brand">🔥 infrared.city Buildathon 2026</span></a>' +
     '<span class="ir-nav">' + links(PAGES, here) + "</span>" +
     '<a href="https://infrared.city/docs/sdk/" target="_blank" rel="noopener">SDK&nbsp;docs ↗</a>' +
     '<span class="ir-count" id="ir-count">⏰ …</span>';
@@ -91,7 +111,15 @@
         ext(TRIAD).map(function (a) { return "<li>" + a + "</li>"; }).join("") +
       "</ul></div>" +
     "</div>" +
-    '<div class="ir-bottom">AT6012 Design Research · CCAE / UCC School of Architecture · infrared.city SDK 0.4.9</div>';
+    '<div class="ir-credits"><div class="ir-cwrap">' +
+      '<a href="https://www.ucc.ie/en/at6012/" target="_blank" rel="noopener" title="Cork Centre for Architectural Education">' + CCAE + '</a>' +
+      '<div class="ir-ctext">' +
+        '<p>Primary author <strong>Maroun C. Tabbal</strong> · assisted by Claude (Anthropic).</p>' +
+        '<p>Seeded by <strong>Oana Taut</strong>’s guest lecture in <strong>AT6012</strong> (2025).</p>' +
+        '<p><strong>AT6012 — “Design Research: Technology Transformations”</strong>: HEA-subsidised CPD micro-credential (5 ECTS), next cohort <strong>23 Sep 2026</strong> · <a href="https://www.ucc.ie/en/at6012/" target="_blank" rel="noopener">ucc.ie/en/at6012</a></p>' +
+      '</div>' +
+    '</div></div>' +
+    '<div class="ir-bottom">AT6012 Design Research · CCAE / UCC School of Architecture · Primary author Maroun C. Tabbal, assisted by Claude · infrared.city SDK 0.4.9</div>';
   document.body.appendChild(footer);
 
   // ---- Countdown ----
