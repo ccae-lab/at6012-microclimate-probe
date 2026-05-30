@@ -938,10 +938,22 @@ async function enterVR(){
     new THREE.MeshStandardMaterial({ color: 0x4f7a3a }));
   ground.rotation.x = -Math.PI / 2; scene.add(ground);
 
-  // build the 8x8 tile and its trees from the live game state (1 m per cell)
+  // build the 8x8 tile and its trees from the live game state (1 m per cell).
+  // rebuildTile() is re-run after every action so planting and growth show up,
+  // and it keeps one pickable pad per cell so the controller ray can hit it.
   const tileGroup = new THREE.Group(); scene.add(tileGroup);
-  (function buildTile(){
+  const cellPads = [];
+  function rebuildTile(){
+    while (tileGroup.children.length) tileGroup.remove(tileGroup.children[0]);
+    cellPads.length = 0;
     for (const c of grid){
+      // a full-height invisible pad is what the ray tests, so a tall canopy
+      // never blocks the cell beneath it
+      const pad = new THREE.Mesh(
+        new THREE.BoxGeometry(0.96, 3.2, 0.96),
+        new THREE.MeshBasicMaterial({ visible: false }));
+      pad.position.set(c.x + 0.5, 1.6, c.y + 0.5);
+      pad.userData.cell = c; tileGroup.add(pad); cellPads.push(pad);
       const cell = new THREE.Mesh(
         new THREE.BoxGeometry(0.96, 0.06, 0.96),
         new THREE.MeshStandardMaterial({ color: c.canyon ? 0x6b5535 : 0x8a6b3a }));
@@ -961,15 +973,90 @@ async function enterVR(){
         canopy.position.set(c.x + 0.5, trunkH + r * 0.6, c.y + 0.5); tileGroup.add(canopy);
       }
     }
-  })();
+  }
+  rebuildTile();
 
-  // teleport marker + controller rays
-  const marker = new THREE.Mesh(
-    new THREE.RingGeometry(0.18, 0.26, 24),
-    new THREE.MeshBasicMaterial({ color: 0xFFC72C }));
-  marker.rotation.x = -Math.PI / 2; marker.visible = false; scene.add(marker);
   const raycaster = new THREE.Raycaster();
   const tmpM = new THREE.Matrix4();
+
+  // hover cursor (sits on whatever the active ray points at) and teleport marker
+  const cursor = new THREE.Mesh(
+    new THREE.RingGeometry(0.1, 0.16, 24),
+    new THREE.MeshBasicMaterial({ color: 0xFFC72C, side: THREE.DoubleSide }));
+  cursor.visible = false; scene.add(cursor);
+  const marker = new THREE.Mesh(
+    new THREE.RingGeometry(0.18, 0.26, 24),
+    new THREE.MeshBasicMaterial({ color: 0x2D1B82, side: THREE.DoubleSide }));
+  marker.rotation.x = -Math.PI / 2; marker.visible = false; scene.add(marker);
+
+  // ---- in-world control panel: travels with the player, reachable by pointing.
+  // Trigger acts on whatever the ray hits (a cell, or one of these buttons).
+  const ui = new THREE.Group();
+  ui.position.set(0, 0.95, -0.5); ui.rotation.x = -0.62; player.add(ui);
+  const buttons = [];
+  function makeBtn(w, h, lx, ly, draw, onClick){
+    const cv = document.createElement("canvas"); cv.width = 200; cv.height = 120;
+    const g = cv.getContext("2d");
+    const tex = new THREE.CanvasTexture(cv);
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h),
+      new THREE.MeshBasicMaterial({ map: tex, transparent: true }));
+    mesh.position.set(lx, ly, 0);
+    mesh.userData.onClick = onClick;
+    mesh.userData.redraw = (hover) => { draw(g, cv, hover); tex.needsUpdate = true; };
+    mesh.userData.redraw(false);
+    ui.add(mesh); buttons.push(mesh); return mesh;
+  }
+  function btnFace(g, cv, label, bg, fg, active, hover){
+    g.clearRect(0,0,cv.width,cv.height);
+    g.fillStyle = bg; g.fillRect(0,0,cv.width,cv.height);
+    if (active || hover){ g.lineWidth = active ? 12 : 6;
+      g.strokeStyle = active ? "#FFC72C" : "#FAFAF7";
+      g.strokeRect(g.lineWidth/2, g.lineWidth/2, cv.width-g.lineWidth, cv.height-g.lineWidth); }
+    g.fillStyle = fg; g.font = "bold 26px Arial"; g.textAlign = "center"; g.textBaseline = "middle";
+    const words = label.split(" "); const lines = [];
+    let cur = "";
+    for (const w of words){ const t = cur ? cur+" "+w : w;
+      if (t.length > 11){ lines.push(cur); cur = w; } else cur = t; }
+    if (cur) lines.push(cur);
+    lines.forEach((ln,i)=> g.fillText(ln, cv.width/2, cv.height/2 + (i-(lines.length-1)/2)*30));
+  }
+  function refreshUI(){ for (const b of buttons) b.userData.redraw(false); }
+
+  // species row (top)
+  SPECIES.forEach((sp, i) => {
+    const lx = -0.32 + (i % 5) * 0.16;
+    makeBtn(0.15, 0.11, lx, 0.20,
+      (g,cv,hover)=> btnFace(g,cv, sp.name, sp.color, "#101010", selSpecies===sp.id, hover),
+      ()=>{ selSpecies = sp.id; selectedTool = "plant"; refreshUI(); renderDeck && renderDeck(); });
+  });
+  // tool row (middle)
+  let selectedTool = "plant";
+  const tools = [["plant","Plant"],["water","Water"],["prune","Prune"],["fell","Fell"]];
+  tools.forEach(([id,label], i) => {
+    const lx = -0.27 + i * 0.18;
+    makeBtn(0.16, 0.11, lx, 0.04,
+      (g,cv,hover)=> btnFace(g,cv, label, "#2D1B82", "#FAFAF7", selectedTool===id, hover),
+      ()=>{ selectedTool = id; tool = id; refreshUI(); });
+  });
+  // fast-forward + reset (bottom)
+  makeBtn(0.34, 0.12, -0.18, -0.12,
+    (g,cv,hover)=> btnFace(g,cv, "Fast-forward season", "#FFC72C", "#101010", false, hover),
+    ()=>{ step(); rebuildTile(); refreshUI(); });
+  makeBtn(0.14, 0.12, 0.28, -0.12,
+    (g,cv,hover)=> btnFace(g,cv, "Reset", "#A1242E", "#FAFAF7", false, hover),
+    ()=>{ reset(); selSpecies = SPECIES[1].id; selectedTool = "plant"; tool = "plant";
+          rebuildTile(); refreshUI(); });
+
+  // act on a cell with the current tool (mirrors the 2D actOn, then redraws 3D)
+  function actCell(c){
+    selected = c; tool = selectedTool;
+    actOn(c);
+    rebuildTile();
+  }
+
+  const interact = () => cellPads.concat(buttons);
+
+  // controllers: trigger = act/select, grip (squeeze) = teleport
   const controllers = [];
   for (let i = 0; i < 2; i++){
     const ctrl = renderer.xr.getController(i);
@@ -977,28 +1064,35 @@ async function enterVR(){
     const line = new THREE.Line(
       new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,-1)]),
       new THREE.LineBasicMaterial({ color: 0xFFC72C }));
-    line.scale.z = 6; ctrl.add(line);
-    ctrl.addEventListener("selectstart", () => { ctrl.userData.aiming = true; });
+    line.scale.z = 5; ctrl.add(line);
     ctrl.addEventListener("selectend", () => {
-      ctrl.userData.aiming = false;
-      if (marker.visible){ player.position.x = marker.position.x; player.position.z = marker.position.z; }
+      const h = ctrl.userData.hit;
+      if (!h) return;
+      if (h.object.userData.onClick) h.object.userData.onClick();
+      else if (h.object.userData.cell) actCell(h.object.userData.cell);
     });
+    ctrl.addEventListener("squeezeend", () => {
+      if (ctrl.userData.tp){ player.position.x = ctrl.userData.tp.x; player.position.z = ctrl.userData.tp.z; }
+    });
+    ctrl.addEventListener("squeezestart", () => { ctrl.userData.squeezing = true; });
+    ctrl.addEventListener("squeezeend", () => { ctrl.userData.squeezing = false; });
   }
 
-  // keyboard (a paired headset keyboard, or desktop XR)
+  // keyboard (a paired headset keyboard, or desktop XR): walk + turn + step
   const keys = {};
-  const onKd = e => { keys[e.key.toLowerCase()] = true; };
+  const onKd = e => { keys[e.key.toLowerCase()] = true;
+    if (e.key === " "){ step(); rebuildTile(); refreshUI(); } };
   const onKu = e => { keys[e.key.toLowerCase()] = false; };
   window.addEventListener("keydown", onKd); window.addEventListener("keyup", onKu);
 
   // head-locked wellbeing panel
-  const hudCv = document.createElement("canvas"); hudCv.width = 256; hudCv.height = 140;
+  const hudCv = document.createElement("canvas"); hudCv.width = 256; hudCv.height = 150;
   const hctx = hudCv.getContext("2d");
   const hudTex = new THREE.CanvasTexture(hudCv);
   const hud = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.46, 0.25),
+    new THREE.PlaneGeometry(0.5, 0.29),
     new THREE.MeshBasicMaterial({ map: hudTex, transparent: true }));
-  hud.position.set(0, -0.32, -0.9); camera.add(hud);
+  hud.position.set(0, -0.34, -0.9); camera.add(hud);
 
   let wellbeing = 50;
   function localEcology(px, pz){
@@ -1013,26 +1107,27 @@ async function enterVR(){
     return { shade, diversity: sp.size, canyon };
   }
   function drawHud(eco){
-    hctx.clearRect(0,0,256,140);
-    hctx.fillStyle = "rgba(16,16,16,0.8)"; hctx.fillRect(0,0,256,140);
-    hctx.fillStyle = "#FAFAF7"; hctx.font = "bold 22px Arial";
-    hctx.fillText("Wellbeing " + Math.round(wellbeing), 14, 32);
+    hctx.clearRect(0,0,256,150);
+    hctx.fillStyle = "rgba(16,16,16,0.82)"; hctx.fillRect(0,0,256,150);
+    hctx.fillStyle = "#FAFAF7"; hctx.font = "bold 22px Arial"; hctx.textAlign = "left";
+    hctx.fillText("Wellbeing " + Math.round(wellbeing), 14, 30);
     hctx.fillStyle = "#E6E6E6"; hctx.font = "13px Arial";
     const msg = eco.shade > 0 ? ("Shade from " + eco.diversity + " species")
               : eco.canyon ? "Open canyon, hot and exposed" : "Open ground";
-    hctx.fillText(msg, 14, 58);
-    hctx.fillStyle = "#444"; hctx.fillRect(14, 74, 228, 14);
+    hctx.fillText(msg, 14, 54);
+    hctx.fillStyle = "#444"; hctx.fillRect(14, 66, 228, 12);
     hctx.fillStyle = wellbeing >= 66 ? "#1f6b3a" : wellbeing >= 40 ? "#FFC72C" : "#A1242E";
-    hctx.fillRect(14, 74, 228 * Math.max(0, Math.min(1, wellbeing / 100)), 14);
+    hctx.fillRect(14, 66, 228 * Math.max(0, Math.min(1, wellbeing / 100)), 12);
     hctx.fillStyle = "#cfcfcf"; hctx.font = "11px Arial";
-    hctx.fillText("Walk: stick / WASD", 14, 108);
-    hctx.fillText("Teleport: trigger    Turn: stick / arrows", 14, 126);
+    hctx.fillText("Trigger: plant / use the panel", 14, 100);
+    hctx.fillText("Grip: teleport     Stick or WASD: walk", 14, 118);
+    hctx.fillText("Season " + season + "   Stability " + lastStab, 14, 138);
     hudTex.needsUpdate = true;
   }
 
-  // locomotion loop
+  // locomotion + interaction loop
   const SPEED = 1.6, TURN = 1.6;   // metres/s, radians/s
-  let last = 0;
+  let last = 0, hoverObj = null;
   function headYaw(){
     const xrCam = renderer.xr.getCamera();
     return new THREE.Euler().setFromQuaternion(xrCam.quaternion, "YXZ").y;
@@ -1055,19 +1150,41 @@ async function enterVR(){
     if (keys["arrowleft"]) turn += 1; if (keys["arrowright"]) turn -= 1;
 
     player.rotation.y += turn * TURN * dt;
-    const yaw = headYaw();                       // world yaw, already includes the rig
+    const yaw = headYaw();
     player.position.x += (mx * Math.cos(yaw) + mz * Math.sin(yaw)) * SPEED * dt;
     player.position.z += (mz * Math.cos(yaw) - mx * Math.sin(yaw)) * SPEED * dt;
 
-    marker.visible = false;
+    // ray from each controller: pick interactables (trigger) or ground (grip)
+    let newHover = null;
+    cursor.visible = false; marker.visible = false;
+    const items = interact();
     for (const ctrl of controllers){
-      if (!ctrl.userData.aiming) continue;
       tmpM.identity().extractRotation(ctrl.matrixWorld);
       raycaster.ray.origin.setFromMatrixPosition(ctrl.matrixWorld);
       raycaster.ray.direction.set(0,0,-1).applyMatrix4(tmpM).normalize();
-      const hit = raycaster.intersectObject(ground)[0];
-      if (hit){ marker.position.copy(hit.point); marker.position.y = 0.02; marker.visible = true; }
+      ctrl.userData.hit = null; ctrl.userData.tp = null;
+      const hit = raycaster.intersectObjects(items, false)[0];
+      if (hit){
+        ctrl.userData.hit = hit;
+        if (hit.object.userData.cell){ newHover = newHover || hit.object;
+          cursor.position.copy(hit.object.position); cursor.position.y = 0.07;
+          cursor.rotation.x = -Math.PI / 2; cursor.visible = true; }
+      }
+      if (ctrl.userData.squeezing){
+        const g = raycaster.intersectObject(ground)[0];
+        if (g){ marker.position.copy(g.point); marker.position.y = 0.02; marker.visible = true;
+          ctrl.userData.tp = g.point.clone(); }
+      }
     }
+    // button hover highlight (redraw only on change)
+    if (newHover !== hoverObj){
+      if (hoverObj && hoverObj.userData.redraw) hoverObj.userData.redraw(false);
+    }
+    for (const ctrl of controllers){
+      const h = ctrl.userData.hit;
+      if (h && h.object.userData.onClick){ h.object.userData.redraw(true); newHover = h.object; }
+    }
+    hoverObj = newHover;
 
     const eco = localEcology(player.position.x, player.position.z);
     const target = eco.shade > 0 ? Math.min(100, 55 + eco.diversity * 12)
@@ -1086,7 +1203,7 @@ async function enterVR(){
     try { renderer.domElement.remove(); renderer.dispose(); } catch(e){}
     _xr.session = null;
   });
-  log("Entered immersive VR. Walk or teleport across the tile.", "ev");
+  log("Entered immersive VR. Trigger to plant or use the panel; grip to teleport.", "ev");
 }
 
 reset();
