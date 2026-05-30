@@ -1,4 +1,4 @@
-"""Microclimate Probe backend — FastAPI over the infrared.city SDK.
+"""Microclimate Probe backend, FastAPI over the infrared.city SDK.
 
 Powers the "Live" mode of tool.html. Keeps INFRARED_API_KEY server-side and
 exposes one endpoint that runs UTCI/wind/solar over an arbitrary polygon and

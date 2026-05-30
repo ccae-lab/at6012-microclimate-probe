@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TREE SIMCITY: a systems-dynamics urban-forest game</title>
+<!--
+  TREE SIMCITY (Phase 0, riskiest-assumption-first prototype)
+  AT6012 x infrared.city Buildathon 2026, CCAE / UCC School of Architecture.
+
+  A live SimCity-style game where the STOCKS are trees. You steward one tile of
+  urban forest. Seeds become saplings, saplings become grown canopy, grown trees
+  can be transplanted. Below ground, soil and root depth decide what survives.
+  Birds and bees arrive when the canopy is diverse, and their seed dispersal and
+  pollination let the system regenerate itself. The objective is a set of
+  self-stabilising energy events: moments when the canopy reseeds itself faster
+  than it loses trees, reached through a diverse mix of species and agents.
+
+  The honest finding from the Regenerative Microclimate Probe is the loss
+  condition, mechanised: filling a street canyon with one fast, broad-crowned
+  species spikes canopy cover, traps radiant heat, starves pollinators, and the
+  system collapses. Diversity is the route to stability.
+
+  Pure browser JavaScript. No backend, no API key, no billable call. Everything
+  runs offline from this single file.
+-->
+<style>
+  :root {
+    --red: #A1242E; --gold: #FFC72C; --blue: #2D1B82;
+    --ink: #101010; --paper: #FAFAF7;
+    --grey-d: #444444; --grey-m: #888888; --grey-l: #E6E6E6;
+    --canopy: #1f6b3a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink);
+    font-family: "Inter", "Helvetica Neue", Arial, sans-serif; line-height: 1.45;
+    overflow-x: hidden; max-width: 100%; }
+  canvas, img { max-width: 100%; }
+  .card .trait, .card .note, .flows, .selinfo, .verdict, .log div { overflow-wrap: anywhere; }
+  a { color: var(--blue); }
+  header.top { background: var(--ink); color: var(--paper); padding: 14px 20px;
+    display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+  header.top .mark { font-weight: 800; letter-spacing: 0.06em; font-size: 20px; }
+  header.top .mark b { color: var(--gold); }
+  header.top .sub { color: var(--grey-l); font-size: 13px; }
+  header.top .season { margin-left: auto; font-size: 14px; color: var(--paper); }
+  header.top .season b { color: var(--gold); font-size: 22px; }
+
+  .wrap { display: grid; grid-template-columns: minmax(320px, 1fr) 360px;
+    gap: 18px; padding: 18px; max-width: 1280px; margin: 0 auto; align-items: start; }
+  @media (max-width: 880px) { .wrap { grid-template-columns: 1fr; } }
+  @media (max-width: 520px) {
+    .wrap { padding: 12px; gap: 12px; }
+    .deck { grid-template-columns: 1fr; }
+    header.top .season { margin-left: 0; }
+  }
+
+  .stage { background: #0d1f14; border-radius: 12px; padding: 12px;
+    box-shadow: 0 2px 10px rgba(16,16,16,0.12); }
+  canvas#tile { width: 100%; height: auto; display: block; border-radius: 8px;
+    background: #0d1f14; touch-action: manipulation; }
+  .stage .legend { display: flex; flex-wrap: wrap; gap: 10px 16px; margin-top: 10px;
+    color: var(--grey-l); font-size: 12px; }
+  .stage .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+
+  .panel { background: #fff; border: 1px solid var(--grey-l); border-radius: 12px;
+    padding: 14px; margin-bottom: 14px; }
+  .panel h2 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--grey-d); }
+
+  .deck { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .card { border: 2px solid var(--grey-l); border-radius: 9px; padding: 8px;
+    cursor: pointer; font-size: 12px; background: var(--paper); }
+  .card:hover { border-color: var(--grey-m); }
+  .card.active { border-color: var(--blue); box-shadow: 0 0 0 2px rgba(45,27,130,0.18); }
+  .card .nm { font-weight: 700; display: flex; align-items: center; gap: 6px; font-size: 12.5px; }
+  .card .swatch { width: 13px; height: 13px; border-radius: 3px; }
+  .card .trait { color: var(--grey-d); font-size: 11px; margin-top: 3px; }
+  .card .note { color: var(--grey-m); font-size: 10.5px; margin-top: 4px; }
+
+  .tools { display: flex; flex-wrap: wrap; gap: 6px; }
+  button.tool { border: 1px solid var(--grey-l); background: var(--paper);
+    border-radius: 8px; padding: 7px 10px; font-size: 12.5px; cursor: pointer; color: var(--ink); }
+  button.tool.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+  button.go { background: var(--gold); border-color: var(--gold); font-weight: 700; }
+  button.go:hover { filter: brightness(0.96); }
+  button.reset { background: #fff; }
+
+  .stocks { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat { background: var(--paper); border: 1px solid var(--grey-l); border-radius: 8px;
+    padding: 8px 10px; }
+  .stat .k { font-size: 11px; color: var(--grey-d); text-transform: uppercase; letter-spacing: 0.04em; }
+  .stat .v { font-size: 20px; font-weight: 800; }
+  .stat .v small { font-size: 12px; font-weight: 600; color: var(--grey-m); }
+
+  .flows { font-size: 12.5px; color: var(--grey-d); }
+  .flows b { color: var(--ink); }
+
+  .stab { display: flex; align-items: center; gap: 14px; }
+  .stab canvas { width: 84px; height: 84px; flex: none; }
+  .stab .meter { flex: 1; }
+  .bar { height: 12px; background: var(--grey-l); border-radius: 7px; overflow: hidden; }
+  .bar > i { display: block; height: 100%; width: 0%; background: var(--canopy); transition: width 0.5s; }
+  .stab .num { font-size: 30px; font-weight: 800; line-height: 1; }
+  .stab .num small { font-size: 13px; color: var(--grey-m); font-weight: 600; }
+
+  .verdict { padding: 10px 12px; border-radius: 9px; font-size: 13px; margin-top: 10px;
+    background: var(--paper); border: 1px solid var(--grey-l); }
+  .verdict.good { background: #eef6ef; border-color: #bcdcc4; }
+  .verdict.bad { background: #fbecec; border-color: #e7b9bd; }
+  .verdict b { display: block; margin-bottom: 2px; }
+
+  .log { font-size: 12px; color: var(--grey-d); max-height: 150px; overflow-y: auto;
+    border-top: 1px dashed var(--grey-l); padding-top: 8px; margin-top: 8px; }
+  .log div { padding: 2px 0; }
+  .log .ev { color: var(--blue); font-weight: 600; }
+  .log .die { color: var(--red); }
+
+  .selinfo { font-size: 12.5px; color: var(--grey-d); min-height: 18px; }
+  .footer { max-width: 1280px; margin: 0 auto; padding: 0 18px 30px; color: var(--grey-m);
+    font-size: 12px; }
+  .footer a { color: var(--blue); }
+
+  /* header controls */
+  header.top .hbtn { border: 1px solid var(--grey-m); background: transparent; color: var(--paper);
+    border-radius: 8px; padding: 5px 10px; font-size: 12.5px; cursor: pointer; }
+  header.top .hbtn:hover { background: rgba(255,255,255,0.1); }
+
+  /* Quest 3 detection banner */
+  #questBanner { display: none; align-items: center; gap: 12px; flex-wrap: wrap;
+    background: var(--blue); color: var(--paper); padding: 10px 20px; font-size: 13.5px; }
+  #questBanner.show { display: flex; }
+  #questBanner b { color: var(--gold); }
+  #questBanner .vrbtn { margin-left: auto; background: var(--gold); color: var(--ink);
+    border: none; border-radius: 8px; padding: 7px 14px; font-weight: 700; cursor: pointer; font-size: 13px; }
+  #questBanner .vrbtn[disabled] { opacity: 0.55; cursor: default; }
+  #questBanner .qx { background: transparent; border: 1px solid var(--paper); color: var(--paper);
+    border-radius: 8px; padding: 6px 10px; cursor: pointer; font-size: 12.5px; }
+
+  /* tutorial spotlight + coach card */
+  .hl-target { position: relative; z-index: 30; outline: 3px solid var(--gold);
+    outline-offset: 3px; border-radius: 12px; box-shadow: 0 0 0 4000px rgba(16,16,16,0.55); }
+  #coach { display: none; position: fixed; z-index: 40; left: 50%; bottom: 22px;
+    transform: translateX(-50%); width: min(560px, calc(100% - 28px));
+    background: #fff; border: 1px solid var(--grey-l); border-radius: 14px;
+    box-shadow: 0 8px 28px rgba(16,16,16,0.28); padding: 16px 18px; }
+  #coach.show { display: block; }
+  #coach .step-k { font-size: 11px; text-transform: uppercase; letter-spacing: 0.09em;
+    color: var(--grey-m); }
+  #coach h3 { margin: 3px 0 6px; font-size: 17px; color: var(--ink); }
+  #coach p { margin: 0 0 12px; font-size: 14px; color: var(--grey-d); }
+  #coach .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  #coach .dots { display: flex; gap: 5px; margin-right: auto; }
+  #coach .dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--grey-l); display: block; }
+  #coach .dots i.on { background: var(--blue); }
+  #coach button { border-radius: 8px; padding: 8px 14px; font-size: 13px; cursor: pointer;
+    border: 1px solid var(--grey-l); background: var(--paper); color: var(--ink); }
+  #coach button.primary { background: var(--blue); color: #fff; border-color: var(--blue); font-weight: 700; }
+  #coach button.ghost { border: none; color: var(--grey-m); }
+  #coach button.helper { background: var(--gold); border-color: var(--gold); font-weight: 700; }
+  @media (max-width: 520px) { #coach { bottom: 10px; padding: 13px 14px; } #coach h3 { font-size: 15.5px; } }
+
+  /* headset adaptation: larger touch targets when on a Quest browser */
+  body.headset button.tool, body.headset .card { font-size: 14px; padding: 11px 13px; }
+  body.headset .deck { gap: 11px; }
+</style>
+<script src="chrome.js" defer></script>
+</head>
+<body>
+<header class="top">
+  <span class="mark">TREE <b>SIMCITY</b></span>
+  <span class="sub">Systems-dynamics urban-forest game · one tile</span>
+  <button class="hbtn" id="tutBtn">Tutorial</button>
+  <span class="season">Season <b id="seasonNum">0</b></span>
+</header>
+
+<div id="questBanner" role="status">
+  <span><b>Meta Quest 3</b> detected. The game is running in your headset browser.</span>
+  <button class="vrbtn" id="vrBtn">View in VR (beta)</button>
+  <button class="qx" id="qxBtn">Dismiss</button>
+</div>
+
+<div class="wrap">
+  <!-- The tile -->
+  <div class="stage">
+    <canvas id="tile" width="640" height="640" aria-label="Urban-forest tile"></canvas>
+    <div class="legend">
+      <span><i class="dot" style="background:#caa45a"></i>soil (darker = richer)</span>
+      <span><i class="dot" style="background:#6b4a2a;border:1px solid #aaa"></i>street canyon cell</span>
+      <span><i class="dot" style="background:#FFC72C"></i>bee</span>
+      <span><i class="dot" style="background:#2D1B82"></i>bird</span>
+      <span>seed · sapling · grown · transplanted (ring)</span>
+    </div>
+  </div>
+
+  <!-- Controls + readouts -->
+  <div>
+    <div class="panel" id="panel-deck">
+      <h2>Species deck</h2>
+      <div class="deck" id="deck"></div>
+      <p class="note" style="font-size:11px;color:var(--grey-m);margin:8px 0 0">
+        Traits are qualitative game parameters, grounded in common urban-forestry
+        behaviour (Tilia and Crataegus feed pollinators, Sorbus berries feed birds,
+        Platanus over-shades narrow canyons). They are not measured field data.</p>
+    </div>
+
+    <div class="panel" id="panel-tools">
+      <h2>Tools</h2>
+      <div class="tools" id="tools">
+        <button class="tool active" data-tool="plant">Plant seed</button>
+        <button class="tool" data-tool="water">Water</button>
+        <button class="tool" data-tool="prune">Prune</button>
+        <button class="tool" data-tool="transplant">Transplant</button>
+        <button class="tool" data-tool="fell">Fell</button>
+      </div>
+      <p class="selinfo" id="selinfo">Tap a cell to select it.</p>
+      <div class="tools" style="margin-top:6px">
+        <button class="tool go" id="step">Fast-forward one season &#9654;</button>
+        <button class="tool reset" id="reset">Reset tile</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Tree stocks</h2>
+      <div class="stocks">
+        <div class="stat"><div class="k">Seeds</div><div class="v" id="s_seed">0</div></div>
+        <div class="stat"><div class="k">Saplings</div><div class="v" id="s_sap">0</div></div>
+        <div class="stat"><div class="k">Grown</div><div class="v" id="s_grown">0</div></div>
+        <div class="stat"><div class="k">Transplanted</div><div class="v" id="s_trans">0</div></div>
+      </div>
+      <p class="flows" id="flows" style="margin:10px 0 0">Flows this season appear after the first fast-forward.</p>
+    </div>
+
+    <div class="panel" id="panel-living">
+      <h2>Living system</h2>
+      <div class="stocks">
+        <div class="stat"><div class="k">Species diversity</div><div class="v" id="m_div">0.00 <small>H&prime;</small></div></div>
+        <div class="stat"><div class="k">Canopy comfort</div><div class="v" id="m_comf">0 <small>idx</small></div></div>
+        <div class="stat"><div class="k">Bees</div><div class="v" id="m_bee">0</div></div>
+        <div class="stat"><div class="k">Birds</div><div class="v" id="m_bird">0</div></div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-stability">
+      <h2>Stability score</h2>
+      <div class="stab">
+        <canvas id="ve" width="168" height="168" title="vector equilibrium, pulses on a self-stabilising event"></canvas>
+        <div class="meter">
+          <div class="num"><span id="stabNum">0</span><small> / 100</small></div>
+          <div class="bar"><i id="stabBar"></i></div>
+          <p class="flows" style="margin:8px 0 0">Self-stabilising events: <b id="evCount">0</b> / 3</p>
+        </div>
+      </div>
+      <div class="verdict" id="verdict"><b>Plant and fast-forward to begin.</b>
+        Diversity feeds the pollinators and seed-dispersers that let the canopy regenerate itself.</div>
+      <div class="log" id="log"></div>
+    </div>
+  </div>
+</div>
+
+<div id="coach" role="dialog" aria-label="Tutorial walkthrough">
+  <div class="step-k" id="coachK">Tutorial · step 1</div>
+  <h3 id="coachT"></h3>
+  <p id="coachP"></p>
+  <div class="row">
+    <div class="dots" id="coachDots"></div>
+    <button class="ghost" id="coachSkip">Skip</button>
+    <button id="coachBack">Back</button>
+    <button class="primary" id="coachNext">Next</button>
+  </div>
+</div>
+
+<div class="footer">
+  Part of the <a href="index.html" target="_blank" rel="noopener noreferrer">Regenerative Microclimate Probe</a>
+  (AT6012 &times; infrared.city Buildathon). The loss condition is the project's own measured finding:
+  adding trees is not automatically regenerative; placement, density and species decide the outcome.
+</div>
+
+<script>
+"use strict";
+// ---------------------------------------------------------------------------
+// Palette (UCC heraldic)
+// ---------------------------------------------------------------------------
+const C = { red:"#A1242E", gold:"#FFC72C", blue:"#2D1B82", ink:"#101010",
+            paper:"#FAFAF7", greyD:"#444444", greyM:"#888888", greyL:"#E6E6E6" };
+
+// ---------------------------------------------------------------------------
+// Seeded PRNG (mulberry32) so a fast-forward is reproducible while testing
+// ---------------------------------------------------------------------------
+let _seed = 0x9e3779b9;
+function srand(s){ _seed = s >>> 0; }
+function rnd(){ _seed |= 0; _seed = (_seed + 0x6D2B79F5) | 0;
+  let t = Math.imul(_seed ^ (_seed >>> 15), 1 | _seed);
+  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }
+function pick(arr){ return arr[Math.floor(rnd()*arr.length)]; }
+
+// ---------------------------------------------------------------------------
+// Species deck. Qualitative game traits, grounded in urban-forestry behaviour
+//   growth     : how fast roots deepen and the crown matures (0..1)
+//   crownMax   : mature crown radius in cells
+//   water      : water demand (0..1), higher needs more tending
+//   canyonFit  : tolerance of a low-ventilation street canyon (0..1)
+//   flowers    : nectar/pollen value for bees (0..1)
+//   fruits     : berry/seed value for birds (0..1)
+// ---------------------------------------------------------------------------
+const SPECIES = [
+  { id:"plane",    name:"London Plane", color:"#3f7d34", growth:0.85, crownMax:1.7,
+    water:0.7, canyonFit:0.25, flowers:0.1, fruits:0.1,
+    note:"Fast, very broad crown. Over-shades narrow canyons and traps heat." },
+  { id:"maple",    name:"Field Maple",  color:"#5a9e3a", growth:0.6, crownMax:1.2,
+    water:0.5, canyonFit:0.7, flowers:0.5, fruits:0.4,
+    note:"All-rounder. Tolerates the canyon, modest forage for agents." },
+  { id:"lime",     name:"Small-leaved Lime", color:"#7bbf5a", growth:0.55, crownMax:1.4,
+    water:0.6, canyonFit:0.5, flowers:0.95, fruits:0.3,
+    note:"A bee magnet in flower. Large crown, needs room." },
+  { id:"rowan",    name:"Rowan",        color:"#c98b3a", growth:0.5, crownMax:0.9,
+    water:0.4, canyonFit:0.8, flowers:0.6, fruits:0.95,
+    note:"Berries feed birds, so seeds travel. Small, canyon-friendly." },
+  { id:"hawthorn", name:"Hawthorn",     color:"#b85c6e", growth:0.45, crownMax:0.8,
+    water:0.35, canyonFit:0.9, flowers:0.85, fruits:0.85,
+    note:"Understorey workhorse. Feeds bees and birds, thrives in tight space." },
+];
+const SP = Object.fromEntries(SPECIES.map(s => [s.id, s]));
+
+// ---------------------------------------------------------------------------
+// Grid / tile model
+// ---------------------------------------------------------------------------
+const N = 8;                    // 8 x 8 cells = one tile
+let grid, season, agents, flows, evCount, stabilizeStreak, lowStreak,
+    selected, tool, selSpecies, logLines, lastStab, ended;
+
+function blankCell(x, y){
+  // A vertical street canyon runs down columns 3 and 4: poor ventilation.
+  const canyon = (x === 3 || x === 4);
+  const soil = canyon ? 0.35 + rnd()*0.2 : 0.45 + rnd()*0.4;
+  return { x, y, canyon, soil, tree:null };
+}
+
+function reset(){
+  srand(0xC0FFEE);
+  grid = [];
+  for (let y=0; y<N; y++) for (let x=0; x<N; x++) grid.push(blankCell(x, y));
+  season = 0; agents = { bees:0, birds:0 };
+  flows = { germ:0, mature:0, recruit:0, death:0 };
+  evCount = 0; stabilizeStreak = 0; lowStreak = 0;
+  selected = null; tool = "plant"; selSpecies = "maple";
+  logLines = []; lastStab = 0; ended = false;
+  log("New tile. Columns 4 and 5 are a street canyon with weak ventilation.");
+  syncTools(); renderDeck(); renderAll();
+}
+
+function cellAt(x, y){ return grid[y*N + x]; }
+function newTree(sp, state){
+  return { sp, state, age:0, root:state==="seed"?0:0.2,
+           crown: state==="grown"||state==="transplanted" ? SP[sp].crownMax*0.6 : 0.05,
+           health:0.8, stress:0 };
+}
+
+// ---------------------------------------------------------------------------
+// The season engine. Stocks change through flows
+// ---------------------------------------------------------------------------
+function neighbours(c){
+  const out = [];
+  for (let dy=-1; dy<=1; dy++) for (let dx=-1; dx<=1; dx++){
+    if (!dx && !dy) continue;
+    const nx=c.x+dx, ny=c.y+dy;
+    if (nx>=0&&nx<N&&ny>=0&&ny<N) out.push(cellAt(nx,ny));
+  }
+  return out;
+}
+function grownNeighbours(c){
+  return neighbours(c).filter(n => n.tree && (n.tree.state==="grown"||n.tree.state==="transplanted")).length;
+}
+
+function step(){
+  if (ended) return;
+  season++;
+  flows = { germ:0, mature:0, recruit:0, death:0 };
+  const cells = grid;
+
+  // 1) tree health, growth, and state transitions
+  for (const c of cells){
+    const t = c.tree; if (!t) continue;
+    const s = SP[t.sp];
+    t.age++;
+    // roots deepen toward 1, faster in richer soil
+    t.root = Math.min(1, t.root + s.growth * (0.35 + 0.5*c.soil) * 0.4);
+    // crown grows logistically toward the species max
+    if (t.state==="grown"||t.state==="transplanted")
+      t.crown += (s.crownMax - t.crown) * 0.25 * s.growth;
+
+    // crowding: many grown neighbours compete for light, water, root space
+    const crowd = grownNeighbours(c);
+    // canyon stress: low-canyonFit species in a canyon, made worse by dense canopy
+    const canyonStress = c.canyon ? (1 - s.canyonFit) * (0.4 + 0.15*crowd) : 0;
+    const water = c.soil;                       // moisture proxy (tending tops it up)
+    const supply = water - 0.6*s.water;         // positive if soil meets demand
+    let health = 0.55 + 0.5*supply - 0.12*Math.max(0,crowd-2) - canyonStress;
+    t.health = Math.max(0, Math.min(1, 0.6*t.health + 0.4*health));
+
+    // soil response: a healthy tree mulches and improves soil a little; an
+    // overcrowded monoculture cell depletes it
+    const sameSp = neighbours(c).filter(n=>n.tree && n.tree.sp===t.sp).length;
+    c.soil = Math.max(0.05, Math.min(1, c.soil + (t.health-0.5)*0.02 - (sameSp>=4?0.03:0)));
+
+    // transitions (flows)
+    if (t.state==="seed"){
+      if (c.soil>0.3 && rnd() < 0.4 + 0.4*c.soil){ t.state="sapling"; t.crown=0.1; flows.germ++; }
+      else if (rnd()<0.15){ c.tree=null; }       // ungerminated seed lost
+    } else if (t.state==="sapling"){
+      if (t.root>0.45 && t.age>=2 && t.health>0.45){ t.state="grown"; flows.mature++; }
+      else if (t.health<0.25 && rnd()<0.5){ c.tree=null; flows.death++; }
+    } else { // grown or transplanted
+      if (t.health<0.3){ t.stress++; } else { t.stress=Math.max(0,t.stress-1); }
+      if (t.stress>=2 && rnd()<0.6){ c.tree=null; flows.death++; logDie(c,s); }
+    }
+  }
+
+  // 2) agents respond to the DIVERSITY of forage across distinct species
+  const grownTrees = cells.filter(c=>c.tree && (c.tree.state==="grown"||c.tree.state==="transplanted")).map(c=>c.tree);
+  const flowering = new Set(grownTrees.filter(t=>SP[t.sp].flowers>0.3).map(t=>t.sp));
+  const fruiting  = new Set(grownTrees.filter(t=>SP[t.sp].fruits>0.3).map(t=>t.sp));
+  const flowerStr = grownTrees.reduce((a,t)=>a+SP[t.sp].flowers,0);
+  const fruitStr  = grownTrees.reduce((a,t)=>a+SP[t.sp].fruits,0);
+  const beeTarget  = 4*flowering.size + 0.6*flowerStr;
+  const birdTarget = 3*fruiting.size  + 0.5*fruitStr;
+  agents.bees  = Math.round(agents.bees  + (beeTarget  - agents.bees)*0.6);
+  agents.birds = Math.round(agents.birds + (birdTarget - agents.birds)*0.6);
+  agents.bees = Math.max(0, agents.bees); agents.birds = Math.max(0, agents.birds);
+
+  // 3) natural recruitment: pollinated, bird-carried seeds land in empty cells.
+  //    Bees raise seed viability; birds set the dispersal reach. Both depend on
+  //    the agent populations that diversity just produced.
+  const empties = cells.filter(c=>!c.tree);
+  let seedBudget = 0;
+  for (const t of grownTrees){
+    const s = SP[t.sp];
+    const pollin = Math.min(1, 0.2 + agents.bees*0.05);
+    const dispersal = Math.min(1, 0.2 + agents.birds*0.05);
+    seedBudget += s.flowers*pollin*0.8 + s.fruits*dispersal*0.8;
+  }
+  seedBudget = Math.floor(seedBudget);
+  for (let i=0; i<seedBudget && empties.length; i++){
+    // bird-dispersed seeds favour fruiting parents; pick a parent then a nearby empty cell
+    const parents = grownTrees.length ? cells.filter(c=>c.tree && (c.tree.state==="grown"||c.tree.state==="transplanted")) : [];
+    const parent = parents.length ? pick(parents) : null;
+    let target = null;
+    if (parent){
+      const near = neighbours(parent).filter(n=>!n.tree);
+      target = near.length && rnd()<0.7 ? pick(near) : (empties.length?pick(empties):null);
+    } else target = pick(empties);
+    if (target && !target.tree){
+      const sp = parent ? parent.tree.sp : pick(SPECIES).id;
+      target.tree = newTree(sp, "seed");
+      flows.recruit++;
+      empties.splice(empties.indexOf(target),1);
+    }
+  }
+
+  scoreAndVerdict(grownTrees, flowering, fruiting);
+  renderAll();
+}
+
+// ---------------------------------------------------------------------------
+// Diversity, comfort, stability, and the self-stabilising event
+// ---------------------------------------------------------------------------
+function shannon(trees){
+  if (!trees.length) return { H:0, Hnorm:0, dominance:0, richness:0 };
+  const counts = {};
+  for (const t of trees) counts[t.sp] = (counts[t.sp]||0)+1;
+  const total = trees.length; let H = 0, maxShare = 0;
+  for (const k in counts){ const p = counts[k]/total; H += -p*Math.log(p); maxShare = Math.max(maxShare,p); }
+  const richness = Object.keys(counts).length;
+  const Hnorm = richness>1 ? H/Math.log(richness) : 0;
+  return { H, Hnorm, dominance:maxShare, richness };
+}
+
+function comfortIndex(grownTrees){
+  // Canopy cools, but dense low-fit canopy in the canyon traps heat (the finding).
+  let cool = 0, trap = 0;
+  for (const c of grid){
+    const t = c.tree; if (!t || (t.state!=="grown"&&t.state!=="transplanted")) continue;
+    const s = SP[t.sp];
+    cool += t.crown * 6;
+    if (c.canyon) trap += t.crown * (1 - s.canyonFit) * 10;
+  }
+  return Math.round(cool - trap);
+}
+
+function scoreAndVerdict(grownTrees, flowering, fruiting){
+  const div = shannon(grownTrees);
+  const comfort = comfortIndex(grownTrees);
+  const canopy = grownTrees.length;
+
+  const diversityScore = div.Hnorm * 40;
+  const agentScore = Math.min(1, (agents.bees+agents.birds)/24) * 20;
+  // self-seeding balance: recruits should roughly replace deaths without runaway
+  const ratio = flows.recruit / Math.max(1, flows.death);
+  const balanced = canopy>0 && ratio>=0.8 && ratio<=2.5;
+  const balanceScore = balanced ? 30 : Math.max(0, 30 - Math.abs(1-ratio)*15);
+  const monoPenalty = div.dominance>0.6 ? (div.dominance-0.6)*100 : 0;     // up to 40
+  const heatPenalty = Math.max(0, -comfort) * 0.8;                          // canyon trap
+  const avgSoil = grid.reduce((a,c)=>a+c.soil,0)/grid.length;
+  const soilScore = avgSoil*10;
+
+  let stab = diversityScore + agentScore + balanceScore + soilScore - monoPenalty - heatPenalty;
+  stab = Math.max(0, Math.min(100, Math.round(stab)));
+  lastStab = stab;
+
+  // self-stabilising condition: diverse, agent-rich, replacing itself
+  const selfStab = div.Hnorm>=0.6 && balanced && agents.bees>0 && agents.birds>0 && canopy>=6;
+  if (selfStab){
+    stabilizeStreak++;
+    if (stabilizeStreak===2){
+      evCount++; stabilizeStreak=0; window._vePulse = season;
+      log(`Self-stabilising energy event ${evCount}. The canopy now reseeds itself.`, "ev");
+    }
+  } else stabilizeStreak = 0;
+
+  // verdict + win / loss
+  const v = document.getElementById("verdict");
+  let cause = "";
+  if (div.dominance>0.6) cause = `One species holds ${Math.round(div.dominance*100)}% of the canopy. Pollinators and seed-dispersers thin out, so the stand cannot reseed itself.`;
+  else if (comfort<0) cause = "Dense canopy in the street canyon is trapping radiant heat and cutting ventilation.";
+  else if (avgSoil<0.3) cause = "Soil is exhausted under crowded same-species roots.";
+
+  if (evCount>=3 && !ended){
+    ended = true;
+    v.className = "verdict good";
+    v.innerHTML = `<b>Regenerating canopy.</b> Three self-stabilising events. A diverse stand with its birds and bees now sustains itself with little tending.`;
+    log("Win: the urban forest is self-stabilising.", "ev");
+  } else if (stab<30 && canopy>0){
+    lowStreak++;
+    if (lowStreak>=3 && !ended){
+      ended = true;
+      v.className = "verdict bad";
+      v.innerHTML = `<b>Maladaptive.</b> ${cause||"The stand cannot sustain itself."} Adding trees was not enough; placement, density and species decided the outcome.`;
+      log("Collapse: the canopy could not regenerate.", "die");
+    } else {
+      v.className = "verdict bad";
+      v.innerHTML = `<b>Under stress.</b> ${cause||"Stability is low."}`;
+    }
+  } else {
+    lowStreak = 0;
+    v.className = div.Hnorm>=0.6 ? "verdict good" : "verdict";
+    if (canopy===0) v.innerHTML = `<b>Bare tile.</b> Plant a mix of species, then fast-forward.`;
+    else if (div.Hnorm>=0.6) v.innerHTML = `<b>On track.</b> Diversity is feeding the agents that disperse and pollinate. Hold it for self-stabilising events.`;
+    else v.innerHTML = `<b>Building up.</b> Add more species so birds and bees arrive and the canopy can reseed itself.`;
+  }
+  window._lastDiv = div; window._lastComfort = comfort;
+}
+
+// ---------------------------------------------------------------------------
+// Player actions
+// ---------------------------------------------------------------------------
+function actOn(c){
+  if (ended && tool!=="plant") { return; }
+  if (tool==="plant"){
+    if (c.tree){ flash("Cell already has a tree."); return; }
+    c.tree = newTree(selSpecies, "seed");
+    log(`Planted a ${SP[selSpecies].name} seed at (${c.x+1},${c.y+1}).`);
+  } else if (tool==="water"){
+    if (!c.tree){ flash("Nothing to water here."); return; }
+    c.soil = Math.min(1, c.soil + 0.18); flash("Watered. Soil moisture up.");
+  } else if (tool==="prune"){
+    if (!c.tree || (c.tree.state!=="grown"&&c.tree.state!=="transplanted")){ flash("Prune a grown tree."); return; }
+    c.tree.crown *= 0.7; flash("Pruned. Smaller crown eases the canyon.");
+  } else if (tool==="fell"){
+    if (!c.tree){ flash("Nothing to fell."); return; }
+    c.tree = null; flash("Felled.");
+  } else if (tool==="transplant"){
+    if (window._move){
+      const src = window._move;
+      if (c.tree){ flash("Target is occupied."); }
+      else {
+        c.tree = src.tree; c.tree.state = "transplanted";
+        c.tree.health = Math.max(0.3, c.tree.health-0.3);   // transplant shock
+        c.tree.root = Math.max(0.2, c.tree.root-0.3);
+        src.tree = null; window._move = null;
+        log(`Transplanted a ${SP[c.tree.sp].name} to (${c.x+1},${c.y+1}). It will need tending.`);
+      }
+    } else {
+      if (!c.tree || (c.tree.state!=="grown"&&c.tree.state!=="transplanted")){ flash("Pick a grown tree to lift, then tap an empty cell."); return; }
+      window._move = c; flash("Lifted. Tap an empty cell to set it down.");
+    }
+  }
+  selected = c; renderAll();
+}
+
+// ---------------------------------------------------------------------------
+// Rendering
+// ---------------------------------------------------------------------------
+const cv = document.getElementById("tile"), cx = cv.getContext("2d");
+let CELL = cv.width / N;
+let beeSprites = [], birdSprites = [];
+
+function renderAll(){
+  document.getElementById("seasonNum").textContent = season;
+  const counts = { seed:0, sapling:0, grown:0, transplanted:0 };
+  for (const c of grid) if (c.tree) counts[c.tree.state]++;
+  document.getElementById("s_seed").textContent = counts.seed;
+  document.getElementById("s_sap").textContent = counts.sapling;
+  document.getElementById("s_grown").textContent = counts.grown;
+  document.getElementById("s_trans").textContent = counts.transplanted;
+
+  document.getElementById("flows").innerHTML = season===0
+    ? "Flows this season appear after the first fast-forward."
+    : `Germinated <b>${flows.germ}</b> · matured <b>${flows.mature}</b> · `
+      + `natural recruits <b>${flows.recruit}</b> · died <b>${flows.death}</b>`;
+
+  const div = window._lastDiv || { Hnorm:0 };
+  document.getElementById("m_div").innerHTML = (div.H||0).toFixed(2) + ' <small>H&prime;</small>';
+  document.getElementById("m_comf").innerHTML = (window._lastComfort||0) + ' <small>idx</small>';
+  document.getElementById("m_bee").textContent = agents.bees;
+  document.getElementById("m_bird").textContent = agents.birds;
+
+  document.getElementById("stabNum").textContent = lastStab;
+  document.getElementById("stabBar").style.width = lastStab + "%";
+  document.getElementById("stabBar").style.background =
+    lastStab>=70 ? C.canopy || "#1f6b3a" : lastStab>=40 ? C.gold : C.red;
+  document.getElementById("evCount").textContent = evCount;
+
+  // selection readout
+  const si = document.getElementById("selinfo");
+  if (selected){
+    const t = selected.tree;
+    si.innerHTML = t
+      ? `(${selected.x+1},${selected.y+1}) ${SP[t.sp].name}, ${t.state}, root ${(t.root*100|0)}%, health ${(t.health*100|0)}%${selected.canyon?", canyon":""}`
+      : `(${selected.x+1},${selected.y+1}) empty, soil ${(selected.soil*100|0)}%${selected.canyon?", canyon":""}`;
+  } else si.textContent = "Tap a cell to select it.";
+
+  syncSprites();
+}
+
+function syncSprites(){
+  // keep one moving sprite per agent unit (capped so it stays legible)
+  const nb = Math.min(agents.bees, 18), nr = Math.min(agents.birds, 12);
+  while (beeSprites.length < nb) beeSprites.push(spawnSprite());
+  beeSprites.length = nb;
+  while (birdSprites.length < nr) birdSprites.push(spawnSprite());
+  birdSprites.length = nr;
+}
+function spawnSprite(){
+  return { x: rnd()*cv.width, y: rnd()*cv.height,
+           vx:(rnd()-0.5)*1.6, vy:(rnd()-0.5)*1.6, ph: rnd()*6.28 };
+}
+
+function drawTile(ts){
+  CELL = cv.width / N;
+  // ground
+  for (const c of grid){
+    const px=c.x*CELL, py=c.y*CELL;
+    // soil colour: richer soil = darker brown
+    const v = c.soil;
+    const r = Math.round(214 - v*90), g = Math.round(176 - v*86), b = Math.round(120 - v*70);
+    cx.fillStyle = `rgb(${r},${g},${b})`;
+    cx.fillRect(px,py,CELL,CELL);
+    if (c.canyon){ cx.fillStyle="rgba(40,30,20,0.28)"; cx.fillRect(px,py,CELL,CELL); }
+    cx.strokeStyle="rgba(16,16,16,0.18)"; cx.lineWidth=1; cx.strokeRect(px,py,CELL,CELL);
+  }
+  // trees
+  for (const c of grid){
+    const t=c.tree; if(!t) continue;
+    const cxp=c.x*CELL+CELL/2, cyp=c.y*CELL+CELL/2, s=SP[t.sp];
+    let rad;
+    if (t.state==="seed") rad=CELL*0.08;
+    else if (t.state==="sapling") rad=CELL*0.16;
+    else rad=Math.max(CELL*0.2, Math.min(CELL*0.62, t.crown*CELL*0.42));
+    // crown
+    cx.beginPath(); cx.arc(cxp,cyp,rad,0,6.2832);
+    cx.fillStyle = s.color;
+    cx.globalAlpha = t.state==="seed"?0.6:0.9; cx.fill(); cx.globalAlpha=1;
+    // health tint: stressed trees fade toward grey
+    if (t.health<0.5 && t.state!=="seed"){
+      cx.beginPath(); cx.arc(cxp,cyp,rad,0,6.2832);
+      cx.fillStyle=`rgba(120,120,120,${(0.5-t.health)})`; cx.fill();
+    }
+    // transplanted ring
+    if (t.state==="transplanted"){
+      cx.beginPath(); cx.arc(cxp,cyp,rad+2,0,6.2832);
+      cx.strokeStyle=C.gold; cx.lineWidth=2; cx.stroke();
+    }
+    // root-depth tick under the tree
+    if (t.state!=="seed"){
+      cx.fillStyle="rgba(16,16,16,0.55)";
+      cx.fillRect(cxp-CELL*0.22, cyp+rad+2, CELL*0.44*t.root, 2.5);
+    }
+  }
+  // selection
+  if (selected){
+    cx.strokeStyle=C.blue; cx.lineWidth=3;
+    cx.strokeRect(selected.x*CELL+1.5, selected.y*CELL+1.5, CELL-3, CELL-3);
+  }
+  if (window._move){
+    cx.strokeStyle=C.gold; cx.lineWidth=3; cx.setLineDash([5,4]);
+    cx.strokeRect(window._move.x*CELL+1.5, window._move.y*CELL+1.5, CELL-3, CELL-3);
+    cx.setLineDash([]);
+  }
+  // agents
+  for (const sp of birdSprites){ moveSprite(sp,ts,1.4);
+    cx.fillStyle=C.blue; cx.beginPath();
+    cx.moveTo(sp.x,sp.y); cx.lineTo(sp.x-6,sp.y+3); cx.lineTo(sp.x-6,sp.y-3); cx.closePath(); cx.fill(); }
+  for (const sp of beeSprites){ moveSprite(sp,ts,2.2);
+    cx.fillStyle=C.gold; cx.beginPath(); cx.arc(sp.x,sp.y,2.6,0,6.2832); cx.fill();
+    cx.strokeStyle="rgba(16,16,16,0.5)"; cx.lineWidth=0.6; cx.stroke(); }
+}
+
+function moveSprite(sp,ts,sCap){
+  sp.x += sp.vx; sp.y += sp.vy;
+  if (sp.x<6||sp.x>cv.width-6) sp.vx*=-1;
+  if (sp.y<6||sp.y>cv.height-6) sp.vy*=-1;
+  // gentle wander
+  sp.vx += (rnd()-0.5)*0.2; sp.vy += (rnd()-0.5)*0.2;
+  const sp2=Math.hypot(sp.vx,sp.vy); if (sp2>sCap){ sp.vx*=sCap/sp2; sp.vy*=sCap/sp2; }
+}
+
+// vector-equilibrium glyph (12 vertices of a cuboctahedron, 2D projection).
+// Pulses for a few seconds after a self-stabilising event ("jitterbug").
+function drawVE(ts){
+  const c=document.getElementById("ve"), g=c.getContext("2d");
+  const w=c.width, h=c.height, ox=w/2, oy=h/2, R=Math.min(w,h)*0.4;
+  g.clearRect(0,0,w,h);
+  let pulse=0;
+  if (window._vePulse!==undefined && season-window._vePulse<=2)
+    pulse = Math.sin(ts/120)*0.12;
+  const verts=[];
+  for (let i=0;i<12;i++){
+    const a=(i/12)*6.2832 + ts/4000;
+    const rr=R*(1+pulse*(i%2?1:-1));
+    verts.push([ox+Math.cos(a)*rr, oy+Math.sin(a)*rr]);
+  }
+  g.strokeStyle="rgba(45,27,130,0.35)"; g.lineWidth=1;
+  for (let i=0;i<12;i++) for (let j=i+1;j<12;j++){
+    const d=Math.hypot(verts[i][0]-verts[j][0], verts[i][1]-verts[j][1]);
+    if (d < R*1.08){ g.beginPath(); g.moveTo(...verts[i]); g.lineTo(...verts[j]); g.stroke(); }
+  }
+  for (const v of verts){ g.beginPath(); g.arc(v[0],v[1],3,0,6.2832);
+    g.fillStyle = lastStab>=70 ? "#1f6b3a" : lastStab>=40 ? C.gold : C.red; g.fill(); }
+  g.fillStyle=C.greyD; g.font="10px Inter, Arial"; g.textAlign="center";
+  g.fillText("vector equilibrium", ox, h-4);
+}
+
+function loop(ts){ drawTile(ts); drawVE(ts); requestAnimationFrame(loop); }
+
+// ---------------------------------------------------------------------------
+// UI wiring
+// ---------------------------------------------------------------------------
+function renderDeck(){
+  const d=document.getElementById("deck"); d.innerHTML="";
+  for (const s of SPECIES){
+    const el=document.createElement("div");
+    el.className="card"+(s.id===selSpecies?" active":"");
+    el.innerHTML = `<div class="nm"><span class="swatch" style="background:${s.color}"></span>${s.name}</div>`
+      + `<div class="trait">crown ${s.crownMax.toFixed(1)} · canyon-fit ${(s.canyonFit*100|0)}% · bees ${(s.flowers*100|0)}% · birds ${(s.fruits*100|0)}%</div>`
+      + `<div class="note">${s.note}</div>`;
+    el.onclick=()=>{ selSpecies=s.id; renderDeck(); };
+    d.appendChild(el);
+  }
+}
+function syncTools(){
+  document.querySelectorAll("#tools .tool").forEach(b=>{
+    b.classList.toggle("active", b.dataset.tool===tool);
+  });
+}
+document.querySelectorAll("#tools .tool").forEach(b=>{
+  b.onclick=()=>{ tool=b.dataset.tool; if(tool!=="transplant") window._move=null; syncTools(); };
+});
+document.getElementById("step").onclick=()=>step();
+document.getElementById("reset").onclick=()=>reset();
+
+function canvasCell(ev){
+  const r=cv.getBoundingClientRect();
+  const sx=cv.width/r.width, sy=cv.height/r.height;
+  const px=(ev.clientX-r.left)*sx, py=(ev.clientY-r.top)*sy;
+  const x=Math.floor(px/CELL), y=Math.floor(py/CELL);
+  if (x<0||x>=N||y<0||y>=N) return null;
+  return cellAt(x,y);
+}
+cv.addEventListener("click", ev=>{ const c=canvasCell(ev); if(c) actOn(c); });
+
+function log(msg, cls){
+  logLines.unshift({msg, cls});
+  if (logLines.length>40) logLines.pop();
+  const el=document.getElementById("log");
+  el.innerHTML = logLines.map(l=>`<div class="${l.cls||""}">S${season}: ${l.msg}</div>`).join("");
+}
+function logDie(c,s){ log(`A ${s.name} at (${c.x+1},${c.y+1}) died under stress.`, "die"); }
+let flashT=null;
+function flash(msg){ const si=document.getElementById("selinfo"); si.textContent=msg;
+  clearTimeout(flashT); flashT=setTimeout(renderAll,1400); }
+
+// ---------------------------------------------------------------------------
+// Starter mix: a balanced, canyon-aware planting a novice can grow from
+// ---------------------------------------------------------------------------
+function placeStarterMix(){
+  reset();
+  const plan = [["lime",1,1],["maple",6,1],["rowan",3,2],["hawthorn",4,2],
+    ["lime",6,5],["maple",1,5],["rowan",4,6],["hawthorn",3,5],
+    ["maple",2,3],["lime",5,6],["rowan",6,3],["hawthorn",1,7]];
+  for (const [sp,x,y] of plan){ selSpecies=sp; tool="plant"; actOn(cellAt(x,y)); }
+  selSpecies="maple"; tool="plant"; renderDeck(); syncTools(); renderAll();
+  log("Starter mix planted: canyon-friendly species in columns 4 and 5, a varied canopy elsewhere.");
+}
+
+// ---------------------------------------------------------------------------
+// In-app tutorial: a guided walkthrough to the self-stabilising solution
+// ---------------------------------------------------------------------------
+const TUT = [
+  { t:"Steward one tile of urban forest",
+    p:"Your aim is three self-stabilising energy events: seasons where the canopy reseeds itself faster than it loses trees. Diversity is how you get there.", hl:null },
+  { t:"Mix several species",
+    p:"Each species feeds bees, feeds birds, or copes with the canyon to a different degree. A varied deck is the engine of a stable tile.", hl:"#panel-deck" },
+  { t:"Plant across the ground",
+    p:"Tap a cell with a species selected to plant a seed. Columns 4 and 5 are a street canyon with weak airflow, so use canyon-friendly species there (Rowan, Hawthorn, Field Maple).",
+    hl:"#tile", helper:"Place a starter mix for me" },
+  { t:"Fast-forward and watch the flows",
+    p:"Press fast-forward one season. Seeds germinate into saplings, saplings mature into grown canopy. The Tree stocks panel counts each flow.", hl:"#panel-tools" },
+  { t:"Birds and bees arrive with diversity",
+    p:"A diverse canopy draws pollinators and seed-dispersers. They raise seed viability and carry seeds into empty cells, so the tile starts to reseed itself.", hl:"#panel-living" },
+  { t:"Read the score and the glyph",
+    p:"Three self-stabilising events wins. The vector-equilibrium glyph pulses each time one fires. The score climbs as diversity, agents, and self-seeding line up.", hl:"#panel-stability" },
+  { t:"Watch the monoculture trap",
+    p:"Packing one fast, broad species into the canyon spikes cover, traps heat, and starves the agents. The tile then cannot reseed and the verdict turns Maladaptive. Keep it diverse.", hl:null },
+];
+let tutI = 0;
+function clearHl(){ document.querySelectorAll(".hl-target").forEach(e=>e.classList.remove("hl-target")); }
+function showTut(i){
+  clearHl();
+  tutI = Math.max(0, Math.min(TUT.length-1, i));
+  const s = TUT[tutI];
+  document.getElementById("coachK").textContent = `Tutorial · step ${tutI+1} of ${TUT.length}`;
+  document.getElementById("coachT").textContent = s.t;
+  document.getElementById("coachP").textContent = s.p;
+  document.getElementById("coachDots").innerHTML = TUT.map((_,j)=>`<i class="${j<=tutI?'on':''}"></i>`).join("");
+  document.getElementById("coachBack").style.visibility = tutI===0 ? "hidden" : "visible";
+  document.getElementById("coachNext").textContent = tutI===TUT.length-1 ? "Start planting" : "Next";
+  const row = document.querySelector("#coach .row");
+  let hb = document.getElementById("coachHelper");
+  if (s.helper){
+    if (!hb){ hb=document.createElement("button"); hb.id="coachHelper"; hb.className="helper";
+      row.insertBefore(hb, document.getElementById("coachSkip")); }
+    hb.textContent = s.helper; hb.style.display="inline-block";
+    hb.onclick = ()=> placeStarterMix();
+  } else if (hb){ hb.style.display="none"; }
+  if (s.hl){ const el=document.querySelector(s.hl);
+    if (el){ el.classList.add("hl-target"); el.scrollIntoView({behavior:"smooth", block:"center"}); } }
+  document.getElementById("coach").classList.add("show");
+}
+function endTut(){ clearHl(); document.getElementById("coach").classList.remove("show");
+  try { localStorage.setItem("ts_tut_done","1"); } catch(e) {} }
+document.getElementById("coachNext").onclick = ()=> { tutI===TUT.length-1 ? endTut() : showTut(tutI+1); };
+document.getElementById("coachBack").onclick = ()=> showTut(tutI-1);
+document.getElementById("coachSkip").onclick = endTut;
+document.getElementById("tutBtn").onclick = ()=> showTut(0);
+
+// ---------------------------------------------------------------------------
+// Meta Quest 3 detection + WebXR entry
+// ---------------------------------------------------------------------------
+function isQuestBrowser(){
+  const ua = navigator.userAgent || "";
+  return /OculusBrowser|Meta Quest|Quest\s?3|Quest Pro|\bQuest\b/i.test(ua);
+}
+function detectQuest(){
+  const params = new URLSearchParams(location.search);
+  const forced = params.get("quest") === "1";
+  const quest = isQuestBrowser() || forced;
+  const banner = document.getElementById("questBanner");
+  const vrBtn = document.getElementById("vrBtn");
+  document.getElementById("qxBtn").onclick = ()=> banner.classList.remove("show");
+  if (quest){ document.body.classList.add("headset"); banner.classList.add("show");
+    log("Meta Quest 3 headset browser detected."); }
+  vrBtn.disabled = true;
+  if (navigator.xr && navigator.xr.isSessionSupported){
+    navigator.xr.isSessionSupported("immersive-vr").then(ok=>{
+      vrBtn.disabled = !ok;
+      vrBtn.title = ok ? "Open the tile as a panel in VR" : "No immersive-vr session here yet";
+      if (ok && !quest){ banner.classList.add("show"); }   // a desktop XR runtime is present
+    }).catch(()=>{ vrBtn.disabled = true; });
+  } else { vrBtn.title = "WebXR is not available in this browser"; }
+  vrBtn.onclick = enterVR;
+}
+
+// Minimal WebXR: present the live tile as a floating panel in the headset.
+// Beta. Verified logic in a 2D browser; the immersive session needs an
+// on-headset check (a 2D browser has no immersive-vr device).
+let _xr = { session:null, gl:null, tex:null, prog:null, buf:null, ref:null };
+function mat4mul(a,b){ const o=new Float32Array(16);
+  for(let r=0;r<4;r++)for(let c=0;c<4;c++){let s=0;for(let k=0;k<4;k++)s+=a[k*4+r]*b[c*4+k];o[c*4+r]=s;}return o; }
+async function enterVR(){
+  if (!(navigator.xr)) { flash("WebXR is not available here."); return; }
+  try {
+    const session = await navigator.xr.requestSession("immersive-vr");
+    _xr.session = session;
+    const glcv = document.createElement("canvas");
+    const gl = glcv.getContext("webgl", { xrCompatible:true });
+    await gl.makeXRCompatible();
+    _xr.gl = gl;
+    session.updateRenderState({ baseLayer: new XRWebGLLayer(session, gl) });
+    _xr.ref = await session.requestReferenceSpace("local");
+    // shader: textured quad
+    const vs = `attribute vec3 p; attribute vec2 uv; varying vec2 v; uniform mat4 m;
+      void main(){ v=uv; gl_Position = m * vec4(p,1.0); }`;
+    const fs = `precision mediump float; varying vec2 v; uniform sampler2D t;
+      void main(){ gl_FragColor = texture2D(t, vec2(v.x, 1.0 - v.y)); }`;
+    const sh=(ty,src)=>{const s=gl.createShader(ty);gl.shaderSource(s,src);gl.compileShader(s);return s;};
+    const prog=gl.createProgram();
+    gl.attachShader(prog,sh(gl.VERTEX_SHADER,vs)); gl.attachShader(prog,sh(gl.FRAGMENT_SHADER,fs));
+    gl.linkProgram(prog); gl.useProgram(prog); _xr.prog=prog;
+    // quad 1.6 m wide, centred at eye height, 2.5 m ahead
+    const W=0.8,H=0.8,Y=1.3,Z=-2.5;
+    const verts=new Float32Array([
+      -W,Y-H,Z, 0,0,  W,Y-H,Z, 1,0,  W,Y+H,Z, 1,1,
+      -W,Y-H,Z, 0,0,  W,Y+H,Z, 1,1, -W,Y+H,Z, 0,1 ]);
+    const buf=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+    gl.bufferData(gl.ARRAY_BUFFER,verts,gl.STATIC_DRAW); _xr.buf=buf;
+    const pl=gl.getAttribLocation(prog,"p"), ul=gl.getAttribLocation(prog,"uv");
+    gl.enableVertexAttribArray(pl); gl.vertexAttribPointer(pl,3,gl.FLOAT,false,20,0);
+    gl.enableVertexAttribArray(ul); gl.vertexAttribPointer(ul,2,gl.FLOAT,false,20,12);
+    const tex=gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D,tex);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
+    _xr.tex=tex;
+    const mloc=gl.getUniformLocation(prog,"m");
+    session.addEventListener("end", ()=>{ _xr.session=null; });
+    const onXR=(t,frame)=>{
+      if(!_xr.session) return;
+      _xr.session.requestAnimationFrame(onXR);
+      const pose=frame.getViewerPose(_xr.ref); if(!pose) return;
+      const layer=_xr.session.renderState.baseLayer;
+      gl.bindFramebuffer(gl.FRAMEBUFFER, layer.framebuffer);
+      gl.clearColor(0.05,0.12,0.08,1); gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+      gl.bindTexture(gl.TEXTURE_2D,tex);
+      gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,cv);  // live game canvas
+      for(const view of pose.views){
+        const vp=layer.getViewport(view);
+        gl.viewport(vp.x,vp.y,vp.width,vp.height);
+        const mvp=mat4mul(view.projectionMatrix, view.transform.inverse.matrix);
+        gl.uniformMatrix4fv(mloc,false,mvp);
+        gl.drawArrays(gl.TRIANGLES,0,6);
+      }
+    };
+    _xr.session.requestAnimationFrame(onXR);
+    log("Entered immersive VR. Look ahead for the tile panel.", "ev");
+  } catch(e){
+    flash("VR session could not start: " + (e && e.message ? e.message : e));
+  }
+}
+
+reset();
+
+// Optional walk-through: ?demo=1 seeds a diverse mix and runs a few seasons so a
+// first visitor lands on a living tile of growing canopy.
+if (new URLSearchParams(location.search).get("demo")){
+  const plan = [["maple",1,1],["lime",6,1],["rowan",3,2],["hawthorn",4,2],
+    ["maple",6,5],["lime",1,5],["rowan",4,6],["hawthorn",3,5],
+    ["maple",2,3],["lime",5,6],["rowan",6,3],["hawthorn",1,7]];
+  for (const [sp,x,y] of plan){ selSpecies=sp; tool="plant"; actOn(cellAt(x,y)); }
+  for (let i=0;i<6;i++) step();
+  tool="plant"; syncTools();
+}
+
+detectQuest();
+
+// First-time novices get the tutorial. ?tutorial=1 forces it; ?demo skips it.
+{
+  const params = new URLSearchParams(location.search);
+  let done = false; try { done = localStorage.getItem("ts_tut_done") === "1"; } catch(e) {}
+  const tp = params.get("tutorial");
+  if (tp !== null) showTut(Math.max(0, (parseInt(tp, 10) || 1) - 1));
+  else if (!params.get("demo") && !done) showTut(0);
+}
+
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

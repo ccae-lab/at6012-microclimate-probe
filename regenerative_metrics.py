@@ -1,4 +1,4 @@
-"""Regenerative microclimate metrics — grid-native.
+"""Regenerative microclimate metrics, grid-native.
 
 This is the SDK-agnostic intellectual core ported from the AT6012 infrared
 toolkit (`thermal_analysis.py`, UCC School of Architecture, Oct 2025).
@@ -6,12 +6,12 @@ toolkit (`thermal_analysis.py`, UCC School of Architecture, Oct 2025).
 The original metrics operated on a DataFrame of (x, y, utci) point samples
 returned by the legacy REST client. The new infrared-sdk 0.4.9 returns a
 clean 2-D numpy grid (`AreaResult.merged_grid`, NaN outside the polygon), so
-these reimplementations operate directly on that grid — simpler and faster
+these reimplementations operate directly on that grid, simpler and faster
 (true gradients via np.gradient instead of nearest-neighbour estimates).
 
 References:
-  Błażejczyk et al. (2013) — Universal Thermal Climate Index (UTCI)
-  Alberti (2016) — Cities That Think Like Planets (assembly complexity)
+  Błażejczyk et al. (2013), Universal Thermal Climate Index (UTCI)
+  Alberti (2016), Cities That Think Like Planets (assembly complexity)
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ import numpy as np
 
 
 # --------------------------------------------------------------------------- #
-# UTCI thermal-stress scale (°C) — Błażejczyk et al. (2013)
+# UTCI thermal-stress scale (°C), Błażejczyk et al. (2013)
 # --------------------------------------------------------------------------- #
 UTCI_COMFORT_LOWER = 9.0
 UTCI_COMFORT_UPPER = 26.0
@@ -131,7 +131,7 @@ def utci_stats(grid: np.ndarray) -> UTCIStats:
 
 @dataclass
 class AssemblyIndex:
-    """Thermal Assembly Complexity Index (TACI) — Alberti (2016), grid-native."""
+    """Thermal Assembly Complexity Index (TACI), Alberti (2016), grid-native."""
 
     index: float
     num_zones: int
@@ -163,21 +163,21 @@ def thermal_assembly_index(grid: np.ndarray, zone_step: float = 2.0) -> Assembly
     if vals.size < 4:
         return AssemblyIndex(0.0, 0, 0.0, 0.0, 0.0, "insufficient data")
 
-    # 1. Microclimate zones — bin the value range in `zone_step`-wide bands.
+    # 1. Microclimate zones, bin the value range in `zone_step`-wide bands.
     lo, hi = float(vals.min()), float(vals.max())
     edges = np.arange(lo, hi + zone_step, zone_step)
     zone_ids = np.clip(np.digitize(vals, edges), 1, max(len(edges) - 1, 1))
     num_zones = int(np.unique(zone_ids).size)
 
-    # 2. Spatial variability — spread of values across the site.
+    # 2. Spatial variability, spread of values across the site.
     spatial_variability = float(vals.std())
 
-    # 3. Spatial diversity — Shannon index over zone occupancy.
+    # 3. Spatial diversity, Shannon index over zone occupancy.
     _, counts = np.unique(zone_ids, return_counts=True)
     p = counts / counts.sum()
     shannon = float(-np.sum(p * np.log(p)))
 
-    # 4. Edge complexity — mean normalised gradient magnitude across the grid
+    # 4. Edge complexity, mean normalised gradient magnitude across the grid
     #    (true thermal-boundary density, NaN-safe).
     filled = np.where(np.isfinite(arr), arr, np.nanmean(vals))
     gy, gx = np.gradient(filled)
@@ -188,13 +188,13 @@ def thermal_assembly_index(grid: np.ndarray, zone_step: float = 2.0) -> Assembly
     index = (num_zones / 10.0) * (spatial_variability / 5.0) * shannon * (edge_complexity * 10.0)
 
     if index < 20:
-        interp = "Low complexity — limited microclimate diversity"
+        interp = "Low complexity, limited microclimate diversity"
     elif index < 50:
-        interp = "Moderate complexity — some thermal variation"
+        interp = "Moderate complexity, some thermal variation"
     elif index < 100:
-        interp = "High complexity — diverse thermal niches"
+        interp = "High complexity, diverse thermal niches"
     else:
-        interp = "Very high complexity — rich thermal assemblage"
+        interp = "Very high complexity, rich thermal assemblage"
 
     return AssemblyIndex(
         index=float(index),

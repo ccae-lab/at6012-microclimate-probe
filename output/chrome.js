@@ -6,6 +6,7 @@
   var PAGES = [
     ["nine-square.html", "▦ Twining"],
     ["tool.html", "🛰 Probe tool"],
+    ["tree-simcity.html", "🌳 Tree SimCity"],
     ["index.html", "Learning module"],
     ["scorecard.html", "Marseille"],
     ["scorecard_cork.html", "Cork"],

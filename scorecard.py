@@ -1,12 +1,12 @@
-"""Regenerative Microclimate Scorecard — infrared.city SDK 0.4.9 demo.
+"""Regenerative Microclimate Scorecard, infrared.city SDK 0.4.9 demo.
 
 A single-file "killer app" for the infrared.city Buildathon that:
 
-  1. Runs the three focus analyses — UTCI (thermal comfort), wind, and solar —
+  1. Runs the three focus analyses, UTCI (thermal comfort), wind, and solar ,
      over a real site polygon, in one workflow, via the new SDK.
   2. Compares a *baseline* (bare site) against a *regenerative intervention*
      (real tree canopy fetched and injected through the SDK's vegetation
-     service) — the same baseline-vs-intervention logic as the AT6012 toolkit,
+     service), the same baseline-vs-intervention logic as the AT6012 toolkit,
      now driven by submit-and-run analyses instead of pre-baked simulations.
   3. Scores each result with the ported regenerative metrics
      (heat-stress %, Thermal Assembly Complexity Index) and prints the delta.
@@ -42,7 +42,7 @@ import regenerative_metrics as rm
 
 
 # --------------------------------------------------------------------------- #
-# Site definition — Marseille (AT6012 case study), small polygon (~1 tile).
+# Site definition, Marseille (AT6012 case study), small polygon (~1 tile).
 # A GeoJSON Polygon: coordinates are [[ [lon, lat], ... ]] (closed ring).
 # --------------------------------------------------------------------------- #
 @dataclass
@@ -79,16 +79,16 @@ def marseille_site() -> Site:
 def cork_site() -> Site:
     # CCAE / Nano Nagle Place, Douglas Street, Cork.
     lat, lon = 51.8936, -8.4759
-    return Site(name="Cork — Nano Nagle Place (Douglas St)", lat=lat, lon=lon,
+    return Site(name="Cork, Nano Nagle Place (Douglas St)", lat=lat, lon=lon,
                 polygon=_square(lat, lon, 0.0036),  # ~800 m site (larger area)
                 weather_hint="Cork")
 
 
 def rome_site() -> Site:
-    # Municipio VIII (Garbatella / Ostiense) — where the city street-tree
+    # Municipio VIII (Garbatella / Ostiense), where the city street-tree
     # register (DIPAMB:AlberatureSpecieMVIII, 58 species) has coverage.
     lat, lon = 41.8453, 12.4905
-    return Site(name="Rome — Municipio VIII (Garbatella)", lat=lat, lon=lon,
+    return Site(name="Rome, Municipio VIII (Garbatella)", lat=lat, lon=lon,
                 polygon=_square(lat, lon, 0.0036),  # ~800 m site
                 weather_hint="Rome")
 
@@ -123,6 +123,72 @@ def city_vegetation(site: Site) -> dict:
     return veg
 
 
+def _points_to_veg(fc: dict, tag: str) -> dict:
+    """Shape a normalized point FeatureCollection (roboflow / gus) into the SDK
+    vegetation-injection dict: one tree Feature per point, attributes filled
+    where the source supplies them, null where it does not."""
+    veg = {}
+    for i, f in enumerate(fc.get("features", [])):
+        geom = f.get("geometry")
+        if not geom or geom.get("type") != "Point":
+            continue
+        p = f.get("properties", {})
+        crown = p.get("crown_m")
+        veg[f"{tag}/{i}"] = {
+            "type": "Feature", "id": f"{tag}/{i}", "geometry": geom,
+            "properties": {"natural": "tree", "species": p.get("species"),
+                           "genus": p.get("genus"), "leaf_type": p.get("leaf_type"),
+                           "leaf_cycle": None, "height": p.get("height"),
+                           "circumference": None,
+                           "diameter_crown": crown},
+        }
+    return veg
+
+
+def roboflow_vegetation(site: Site) -> dict:
+    """Tier-3 CV vegetation: canopies detected on keyless aerial imagery, with
+    crown diameter (metres) from the bounding box. Species stays null (a
+    detection model sees crowns, not taxa)."""
+    import city_data as cd
+    fc = cd.roboflow_canopy(bbox_of(site.polygon))
+    print(f"  roboflow: {len(fc['features'])} canopies from "
+          f"{fc['tiles_ok']}/{fc['tiles_requested']} tiles @ z{fc['zoom']}")
+    return _points_to_veg(fc, "roboflow")
+
+
+def gus_vegetation(site: Site) -> dict:
+    """Tier-3 keyed vegetation: per-tree records from GUS.earth (species, DBH,
+    condition). GET /api/v1/gus/trees returns a list of tree records; field names
+    are normalised defensively here and confirmed on first live run."""
+    import city_data as cd
+    data = cd.gus_trees(bbox_of(site.polygon))
+    records = (data if isinstance(data, list)
+               else data.get("trees") or data.get("features") or data.get("results") or [])
+    veg = {}
+    for i, rec in enumerate(records):
+        if not isinstance(rec, dict):
+            continue
+        lon = rec.get("lng") or rec.get("longitude") or rec.get("lon")
+        lat = rec.get("lat") or rec.get("latitude")
+        geom = rec.get("geometry")
+        if geom and geom.get("type") == "Point":
+            lon, lat = geom["coordinates"][0], geom["coordinates"][1]
+        if lon is None or lat is None:
+            continue
+        dbh = rec.get("dbh") or rec.get("diameter")
+        veg[f"gus/{i}"] = {
+            "type": "Feature", "id": f"gus/{i}",
+            "geometry": {"type": "Point", "coordinates": [lon, lat]},
+            "properties": {"natural": "tree",
+                           "species": rec.get("species") or rec.get("species_name"),
+                           "genus": rec.get("genus"), "leaf_type": None, "leaf_cycle": None,
+                           "height": rec.get("height"), "circumference": None,
+                           "diameter_crown": rec.get("crown") or rec.get("canopy_diameter")},
+        }
+    print(f"  gus: {len(veg)} trees")
+    return veg
+
+
 # Summer afternoon window (Marseille August baseline, matching the AT6012 toolkit).
 TIME_PERIOD = TimePeriod(
     start_month=8, start_day=15, start_hour=9,
@@ -135,7 +201,7 @@ WIND_DIRECTION = 315
 
 
 # --------------------------------------------------------------------------- #
-# Analysis registry — maps a short key to (request builder, preview type, unit).
+# Analysis registry, maps a short key to (request builder, preview type, unit).
 # --------------------------------------------------------------------------- #
 def fetch_utci_weather(client: ir.InfraredClient, site: Site) -> dict:
     """Fetch real EPW weather for the site and shape it into UTCI input arrays.
@@ -192,10 +258,10 @@ ANALYSES = {
 
 
 # --------------------------------------------------------------------------- #
-# Preview (cheap) — report tiling per analysis without submitting jobs.
+# Preview (cheap), report tiling per analysis without submitting jobs.
 # --------------------------------------------------------------------------- #
 def preview(client: ir.InfraredClient, site: Site, keys: list[str]) -> int:
-    print(f"\nPREVIEW — {site.name}")
+    print(f"\nPREVIEW, {site.name}")
     print(f"  polygon centroid: {site.lat:.4f}, {site.lon:.4f}")
     total = 0
     for k in keys:
@@ -214,7 +280,7 @@ def preview(client: ir.InfraredClient, site: Site, keys: list[str]) -> int:
 
 
 # --------------------------------------------------------------------------- #
-# Live run — vegetation fetch + baseline/intervention area runs + scoring.
+# Live run, vegetation fetch + baseline/intervention area runs + scoring.
 # --------------------------------------------------------------------------- #
 def progress_printer(tag: str) -> Callable:
     last = {"t": 0.0}
@@ -251,7 +317,7 @@ def run_live(client: ir.InfraredClient, site: Site, keys: list[str],
     elif scenario == "intervention":
         scenarios = {"intervention": True}
 
-    # Fetch real buildings once — context geometry for ALL scenarios.
+    # Fetch real buildings once, context geometry for ALL scenarios.
     # (thermal-comfort-index requires geometry; buildings also shape wind/solar.)
     print(f"\nFetching buildings for {site.name} ...", flush=True)
     area_bld = client.buildings.get_area(site.polygon)
@@ -267,6 +333,12 @@ def run_live(client: ir.InfraredClient, site: Site, keys: list[str],
             species = {v["properties"].get("species") for v in veg_features.values()}
             print(f"  {len(veg_features)} city trees, {len(species)} species "
                   f"(e.g. {', '.join([s for s in list(species)[:3] if s])})")
+        elif veg_source == "roboflow":
+            print(f"\nDetecting CANOPIES from aerial imagery (Roboflow CV) for {site.name} ...", flush=True)
+            veg_features = roboflow_vegetation(site)
+        elif veg_source == "gus":
+            print(f"\nFetching GUS.earth per-tree vegetation for {site.name} ...", flush=True)
+            veg_features = gus_vegetation(site)
         else:
             print(f"\nFetching SDK (OSM) vegetation for {site.name} ...", flush=True)
             area_veg = client.vegetation.get_area(site.polygon)
@@ -316,7 +388,7 @@ def run_live(client: ir.InfraredClient, site: Site, keys: list[str],
 # --------------------------------------------------------------------------- #
 def print_scorecard(site: Site, keys: list[str], results: dict) -> None:
     print("\n" + "=" * 70)
-    print(f"REGENERATIVE MICROCLIMATE SCORECARD — {site.name}")
+    print(f"REGENERATIVE MICROCLIMATE SCORECARD, {site.name}")
     print("=" * 70)
 
     has_both = "baseline" in results and "intervention" in results
@@ -334,7 +406,7 @@ def print_scorecard(site: Site, keys: list[str], results: dict) -> None:
             print(f"    heat-stress area : {d_heat:+.1f} pts   "
                   f"({'improved' if d_heat < 0 else 'worse'})")
             print(f"    assembly complexity (TACI): {d_taci:+.1f}%   "
-                  f"({'increased — regenerative' if d_taci > 15 else 'insufficient gain'})")
+                  f"({'increased, regenerative' if d_taci > 15 else 'insufficient gain'})")
 
     for k in keys:
         if k == "utci":
@@ -357,7 +429,7 @@ def render_figure(site: Site, keys: list[str], results: dict, out_dir: str) -> s
     n = len(keys)
     fig, axes = plt.subplots(len(scens), n, figsize=(4.2 * n, 3.8 * len(scens)),
                              squeeze=False)
-    fig.suptitle(f"Regenerative Microclimate Scorecard — {site.name}",
+    fig.suptitle(f"Regenerative Microclimate Scorecard, {site.name}",
                  fontsize=14, fontweight="bold")
     cmaps = {"utci": "RdYlBu_r", "wind": "viridis", "solar": "magma"}
     for r, scen in enumerate(scens):
@@ -373,12 +445,12 @@ def render_figure(site: Site, keys: list[str], results: dict, out_dir: str) -> s
             im = ax.imshow(grid, origin="lower", cmap=cmaps.get(k, "viridis"),
                            extent=extent, aspect="auto")
             fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-            ax.set_title(f"{scen} — {ANALYSES[k]['label']}", fontsize=10)
+            ax.set_title(f"{scen}, {ANALYSES[k]['label']}", fontsize=10)
             ax.set_xticks([])
             ax.set_yticks([])
     fig.tight_layout(rect=[0, 0, 1, 0.96])
     os.makedirs(out_dir, exist_ok=True)
-    slug = site.name.split("(")[0].split("—")[0].strip().lower().replace(" ", "_")
+    slug = site.name.split("(")[0].split(",")[0].strip().lower().replace(" ", "_")
     path = os.path.join(out_dir, f"scorecard_{slug}.png")
     fig.savefig(path, dpi=150)
     plt.close(fig)
@@ -402,8 +474,11 @@ def main(argv: Optional[list[str]] = None) -> int:
     ap.add_argument("--out", default="output", help="Output directory for figures.")
     ap.add_argument("--site", default="marseille", choices=list(SITES),
                     help="Which site to analyse (default: marseille).")
-    ap.add_argument("--veg-source", default="sdk", choices=["sdk", "city"],
-                    help="Intervention vegetation source: SDK/OSM or city open data (default: sdk).")
+    ap.add_argument("--veg-source", default="sdk",
+                    choices=["sdk", "city", "roboflow", "gus"],
+                    help="Intervention vegetation source: sdk/OSM, city open data, "
+                         "roboflow canopy CV, or gus.earth per-tree (default: sdk). "
+                         "Sentinel-2 NDVI and WorldCover are density readouts via city_data.py.")
     args = ap.parse_args(argv)
 
     keys = [k.strip() for k in args.analyses.split(",") if k.strip()]

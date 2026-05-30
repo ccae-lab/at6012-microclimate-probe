@@ -1,4 +1,4 @@
-"""Diurnal microclimate time series — infrared.city SDK 0.4.9.
+"""Diurnal microclimate time series, infrared.city SDK 0.4.9.
 
 The area analyses return one spatial grid aggregated over a time window, so a
 *temporal* series is built by running the same site across several windows and
@@ -61,7 +61,7 @@ def render(site_name: str, rows: list[dict], out_dir: str) -> str:
     air = [r["air_temp"] for r in rows]
 
     fig, ax1 = plt.subplots(figsize=(9, 5))
-    fig.suptitle(f"Diurnal microclimate time series — {site_name}",
+    fig.suptitle(f"Diurnal microclimate time series, {site_name}",
                  fontsize=13, fontweight="bold")
     ax1.plot(hours, utci, "o-", color="#c0392b", lw=2, label="Mean UTCI (°C)")
     ax1.plot(hours, air, "s--", color="#7f8c8d", lw=1.5, label="Air temp (°C)")
@@ -79,7 +79,7 @@ def render(site_name: str, rows: list[dict], out_dir: str) -> str:
     ax1.legend(l1 + l2, lb1 + lb2, loc="upper left", fontsize=9)
 
     os.makedirs(out_dir, exist_ok=True)
-    slug = site_name.split("(")[0].split("—")[0].strip().lower().replace(" ", "_")
+    slug = site_name.split("(")[0].split(",")[0].strip().lower().replace(" ", "_")
     path = os.path.join(out_dir, f"timeseries_{slug}.png")
     fig.tight_layout(rect=[0, 0, 1, 0.96])
     fig.savefig(path, dpi=150)
@@ -101,7 +101,7 @@ def main(argv=None) -> int:
     poly = sc._square(base.lat, base.lon, 0.0011)
 
     if not args.run:
-        print(f"PREVIEW — diurnal UTCI sweep over {base.name}")
+        print(f"PREVIEW, diurnal UTCI sweep over {base.name}")
         print(f"  hours: {hours}  ({len(hours)} live UTCI jobs on a single tile)")
         print("  Run live with:  python time_series.py --run")
         return 0
