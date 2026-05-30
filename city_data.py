@@ -428,6 +428,68 @@ def gus_trees(bbox: tuple | None = None, api_key: str | None = None,
     return r.json()
 
 
+def gus_trees_detailed(bbox: tuple, api_key: str | None = None, base: str | None = None,
+                       limit: int = 800, batch: int = 200) -> dict:
+    """Per-tree GUS records enriched with species and size, as a normalized
+    FeatureCollection (same shape as the city and Roboflow connectors).
+
+    The list endpoint returns only id + coordinates, so this joins it to the
+    `/trees/batch` detail call (species, dbh, height, crown width, deciduous or
+    evergreen). This is the source that fills the SDK's null species/height/crown
+    attributes with authoritative per-tree data. Coverage is wherever the account
+    has trees (London for this project).
+    """
+    import os
+    api_key = api_key or os.getenv("GUS_API_KEY")
+    base = (base or os.getenv("GUS_API_BASE", GUS_BASE)).rstrip("/")
+    if not api_key:
+        raise RuntimeError("Set GUS_API_KEY in .env (see https://backend.gus.earth/docs)")
+    H = {"X-API-Key": api_key}
+    lst = requests.get(f"{base}{GUS_TREES}", headers=H, timeout=TIMEOUT,
+                       params={"lnglatbounds": ",".join(str(x) for x in bbox),
+                               "limit": limit}).json()
+    coords = {t["id"]: (t.get("lng"), t.get("lat")) for t in lst
+              if isinstance(t, dict) and t.get("id")}
+    ids = list(coords)
+    url = f"{base}/api/v1/gus/trees/batch"
+
+    def fetch_batch(id_list):
+        """The batch endpoint caps the id count, so split on a 400 until it fits."""
+        try:
+            r = requests.post(url, headers=H, json=id_list, timeout=TIMEOUT)
+            r.raise_for_status()
+            return r.json()
+        except requests.HTTPError:
+            if len(id_list) <= 10:
+                return []
+            mid = len(id_list) // 2
+            return fetch_batch(id_list[:mid]) + fetch_batch(id_list[mid:])
+
+    feats = []
+    for i in range(0, len(ids), batch):
+        for rec in fetch_batch(ids[i:i + batch]):
+            tr = rec.get("tree", rec) if isinstance(rec, dict) else {}
+            lon, lat = coords.get(tr.get("id"), (None, None))
+            if lon is None or lat is None:
+                continue
+            si = tr.get("species_info") or {}
+            feats.append({
+                "type": "Feature",
+                "geometry": {"type": "Point", "coordinates": [lon, lat]},
+                "properties": {
+                    "source": "gus", "kind": "tree",
+                    "species": tr.get("species") or si.get("full_scientific_name"),
+                    "genus": si.get("genus"),
+                    "leaf_cycle": si.get("classification"),
+                    "height": tr.get("height"),
+                    "crown_m": tr.get("crownW"),
+                    "dbh": tr.get("dbh"),
+                    "condition": tr.get("condition"),
+                },
+            })
+    return {"type": "FeatureCollection", "features": feats, "total": len(feats)}
+
+
 # Default verification bbox: Villa Doria Pamphilj park, Rome (dense real canopy).
 _DEFAULT_BBOX = (12.4420, 41.8840, 12.4480, 41.8875)
 
@@ -469,7 +531,14 @@ def main(argv=None) -> int:
         print(f"sentinel: NDVI PNG written to {out} ({len(png)} bytes)")
         return 0
     if args.source == "gus":
-        print(json.dumps(gus_trees(_parse_bbox(args.bbox)), indent=2)[:1500])
+        fc = gus_trees_detailed(_parse_bbox(args.bbox))
+        feats = fc["features"]
+        species = {f["properties"].get("species") for f in feats}
+        print(f"gus: {len(feats)} trees, {len([s for s in species if s])} distinct species")
+        for f in feats[:6]:
+            p = f["properties"]; c = f["geometry"]["coordinates"]
+            print(f"  - {p.get('species')} | ({c[1]:.5f},{c[0]:.5f}) | "
+                  f"crown~{p.get('crown_m')}m dbh {p.get('dbh')} {p.get('leaf_cycle')}")
         return 0
 
     fc = PROVIDERS[args.source](limit=args.limit)
