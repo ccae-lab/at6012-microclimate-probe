@@ -1,6 +1,7 @@
 # The Data & API Guide — Regenerative Microclimate Probe
 
 **AT6012 × infrared.city Buildathon 2026 · CCAE / UCC School of Architecture**
+*Primary author: **Maroun C. Tabbal** · assisted by Claude (Anthropic). Seeded by Oana Taut's AT6012 guest lecture (2025).*
 
 > **Who this is for.** Everyone — from "I've never made an API key" to "just tell me the
 > endpoint." Every section has a **🟢 Novice path** (the one obvious correct choice, with
