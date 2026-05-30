@@ -207,12 +207,69 @@
   .callout{border-left:4px solid var(--south);background:#fff8ec;padding:10px 14px;border-radius:0 8px 8px 0;margin:10px 0}
   .callout.honest{border-color:#a23b2e;background:#fbeeec}
   .callout.win{border-color:#1e6b3a;background:#ecf7f0}
+
+  /* ---- plain-language line on each glance cell (Viktor: language too abstract) ---- */
+  .cell .plain{font-size:12px;line-height:1.4;color:#7f8d9b;margin:4px 0 0}
+  .cell .plain b{color:#5f6e7d;font-weight:700}
+  .cell.centre .plain{color:#9fb1c4}.cell.centre .plain b{color:#c7d3df}
+  .intro .plainlead{font-size:14px;color:#2b3947;margin:0 0 8px;font-weight:600}
+  .intro .plainlead .tag{display:inline-block;background:var(--south);color:#1b2733;
+    font:800 10px/1 -apple-system,sans-serif;letter-spacing:.06em;text-transform:uppercase;
+    border-radius:5px;padding:3px 6px;vertical-align:1px;margin-right:7px}
+
+  /* ---- "Start here" CTA (Viktor: where to start) ---- */
+  .start-cta{display:inline-flex;align-items:center;gap:8px;margin:10px 12px 0 0;
+    background:var(--south);color:#1b2733;border:0;border-radius:999px;
+    padding:10px 17px;font:800 13px -apple-system,sans-serif;cursor:pointer;
+    box-shadow:0 2px 10px rgba(176,122,22,.45);animation:nudge 2.4s ease-in-out 1s 3}
+  .start-cta:hover{filter:brightness(1.06)}
+  @keyframes nudge{0%,100%{transform:translateY(0)}8%{transform:translateY(-4px)}16%{transform:translateY(0)}}
+
+  /* ---- guided pathway = the jitterbug: the VE in motion ---- */
+  .cell.tour-active{overflow:visible;border-color:var(--south);
+    box-shadow:0 0 0 3px rgba(176,122,22,.55),0 12px 30px rgba(20,32,44,.2)}
+  .step-badge{position:absolute;top:-12px;left:-12px;z-index:6;width:30px;height:30px;border-radius:50%;
+    background:var(--south);color:#1b2733;font:800 14px/30px ui-monospace,Menlo,monospace;text-align:center;
+    box-shadow:0 2px 7px rgba(0,0,0,.35)}
+  .path-trace{position:absolute;inset:8px;z-index:3;display:none;pointer-events:none}
+  @media (min-width:960px){ .path-trace{display:block} }
+  .path-trace polyline{fill:none;stroke:var(--south);stroke-width:.07;vector-effect:non-scaling-stroke;
+    stroke-linejoin:round;stroke-linecap:round;stroke-dasharray:.32 .26;opacity:.9}
+
+  /* ---- the tour bar ---- */
+  .tourbar{position:fixed;left:0;right:0;bottom:0;z-index:99998;transform:translateY(115%);
+    transition:transform .25s ease;background:#0f1b2a;color:#eaf0f6;border-top:2px solid var(--south);
+    box-shadow:0 -6px 26px rgba(0,0,0,.32)}
+  .tourbar.open{transform:none}
+  .tourbar .tb{max-width:1040px;margin:0 auto;padding:11px 18px;display:flex;align-items:center;gap:13px;flex-wrap:wrap}
+  .tourbar .step-no{font:800 12px ui-monospace,Menlo,monospace;background:var(--south);color:#1b2733;
+    border-radius:6px;padding:5px 8px;white-space:nowrap}
+  .tourbar .dots{display:flex;gap:5px}
+  .tourbar .dot{width:8px;height:8px;border-radius:50%;background:#33455a;transition:background .2s}
+  .tourbar .dot.on{background:var(--south)}
+  .tourbar .tb-text{flex:1 1 300px;min-width:230px;font-size:13.5px;line-height:1.45}
+  .tourbar .tb-text b{color:#ffd9b3}
+  .tourbar button{border:1px solid #2c4056;background:#1c2c40;color:#eaf0f6;border-radius:8px;
+    padding:8px 13px;cursor:pointer;font:600 13px inherit}
+  .tourbar button.prim{background:var(--south);color:#1b2733;border-color:var(--south);font-weight:800}
+  .tourbar button:hover{filter:brightness(1.12)}
+  .tourbar button:disabled{opacity:.4;cursor:default;filter:none}
+
+  /* ---- explicit INPUT → OUTPUT band (Viktor: clearer input & output) ---- */
+  .io{display:flex;gap:12px;align-items:stretch;flex-wrap:wrap;margin:6px 0 14px}
+  .io .box{flex:1 1 230px;border:1px solid var(--line);border-radius:11px;padding:13px 15px}
+  .io .box.in{background:#eef3f8}.io .box.out{background:#ecf7f0}
+  .io .box h5{margin:0 0 7px;font:800 11px/1 -apple-system,sans-serif;letter-spacing:.07em;text-transform:uppercase;color:#46566a}
+  .io .box.in h5{color:#2c5f8f}.io .box.out h5{color:#1e6b3a}
+  .io .arrow{align-self:center;font-size:24px;color:var(--south);font-weight:800}
+  .io ul{margin:0;padding-left:17px}.io li{margin:4px 0;font-size:13px}
 </style>
 </head>
 <body>
 
 <div class="intro">
   <h1>Twining <span class="glyph">相生</span> — the synergetic nine-square</h1>
+  <p class="plainlead"><span class="tag">In plain terms</span>Pick a place, add trees, and see whether the street gets cooler — or hotter. Sometimes more trees makes it worse; this tool shows when, and why.</p>
   <p>A vector-equilibrium navigator for the Regenerative Microclimate Probe.
      <b>Position carries meaning.</b> The vertical axis is an abstraction gradient —
      top is <b>generalised principle</b>, bottom is <b>special-case scenario</b>. The centre
@@ -226,6 +283,7 @@
     <span style="color:#9aa7b4">Corners = lineage · recipe · counter-case · exemplar</span>
     <span class="count-pill" id="count">…</span>
   </div>
+  <button class="start-cta" id="start-here" type="button">▸ Start here · the 2-minute path</button>
 </div>
 
 <div class="stage">
@@ -244,6 +302,7 @@
     <div class="frame">
       <!-- the vector-equilibrium truss: nodes ARE the nine cells -->
       <svg class="ve" viewBox="0 0 6 6" preserveAspectRatio="none" aria-hidden="true" id="ve"></svg>
+      <svg class="path-trace" viewBox="0 0 6 6" preserveAspectRatio="none" aria-hidden="true" id="trace"></svg>
       <div class="hinge" title="vector-equilibrium hinge" aria-hidden="true">
         <svg width="22" height="22" viewBox="0 0 22 22"><g stroke="#2c6e7a" stroke-width="1.3" fill="none">
           <circle cx="11" cy="11" r="9"/><circle cx="11" cy="11" r="2.4" fill="#2c6e7a"/>
@@ -260,6 +319,19 @@
     <span class="end">W · def</span>
     <div class="ticks" id="ruler-bot"></div>
     <span class="end r">tool · E</span>
+  </div>
+</div>
+
+<!-- ============ the guided pathway (jitterbug) tour bar ============ -->
+<div class="tourbar" id="tourbar" role="region" aria-label="Guided learning pathway">
+  <div class="tb">
+    <span class="step-no" id="tb-no">1 / 6</span>
+    <div class="dots" id="tb-dots" aria-hidden="true"></div>
+    <span class="tb-text" id="tb-text">…</span>
+    <button id="tb-open" class="prim">Open this ▸</button>
+    <button id="tb-prev" aria-label="Previous step">◂</button>
+    <button id="tb-next" aria-label="Next step">Next ▸</button>
+    <button id="tb-end" aria-label="End the tour">✕</button>
   </div>
 </div>
 
@@ -321,7 +393,11 @@ var CELLS = [
       <p>community-engagement.eu (Campus Engage / National Forum Ireland) → SPACE Erasmus+ → ENGAGE.
       Boyer's Scholarship of Engagement; the Engagement Spectrum; reciprocity as the ethical core.</p>
       <p class="callout">The vector equilibrium (cuboctahedron): 12 vertices around 1 nucleus, all edges equal —
-      Fuller's figure of <i>equilibrium</i>. Its 12 ruler-ticks edge this frame.</p>` },
+      Fuller's figure of <i>equilibrium</i>. Its 12 ruler-ticks edge this frame.</p>
+      <h4>Acknowledgements</h4>
+      <p>The guided 2-minute pathway, the plain-language layer and the explicit input→output framing
+      were added in response to <b>Viktor Gekker</b>'s sharp, generous feedback on the standalone learning
+      tool — given on a Sunday, and much appreciated.</p>` },
 
   { id:"principles", addr:"N", coord:"[0·N]", role:"Generalised principle", region:"r-north",
     glyph:"⚖", title:"The regenerative law", one:"Trees are not automatically regenerative. Placement, density & geometry decide.",
@@ -397,8 +473,21 @@ var CELLS = [
     glyph:"🛰", title:"The live Probe", one:"The nuclear vertex — between principle (above) and case (below).",
     dh:"#0f1b2a",
     body:`<p>The centre always sits <b>between</b> principle (the row above) and case (the row below) —
-      this is the twining. Here it is the <b>live Microclimate Probe</b>: pick a location and variables,
-      get UTCI / wind / solar over the infrared.city SDK.</p>
+      this is the twining. Here it is the <b>live Microclimate Probe</b>: the one cell where you <i>do</i> something.</p>
+      <h4>What goes in, what comes out</h4>
+      <div class="io">
+        <div class="box in"><h5>① You set (input)</h5><ul>
+          <li><b>Where</b> — a location (click the map or pick a preset city)</li>
+          <li><b>What-if</b> — a scenario: baseline vs. add vegetation</li>
+          <li><b>When</b> — month · day · hour (and wind speed/direction)</li>
+        </ul></div>
+        <div class="arrow" aria-hidden="true">→</div>
+        <div class="box out"><h5>② You get (output)</h5><ul>
+          <li><b>A heat map</b> — UTCI / wind / solar over the tile</li>
+          <li><b>A number</b> — heat-stress %, mean UTCI, zone diversity</li>
+          <li><b>A verdict</b> — did the trees help, or backfire?</li>
+        </ul></div>
+      </div>
       <iframe class="embedbox" src="tool.html" title="Microclimate Probe tool" loading="lazy"></iframe>
       <p style="margin-top:12px">
         <a class="btn" href="tool.html" target="_blank" rel="noopener">Open the Probe full-screen ▸</a>
@@ -523,9 +612,37 @@ buildRuler(document.getElementById("ruler-bot"));
   ve.innerHTML=svg;
 })();
 
+/* plain-language gloss per cell (Viktor: terms read as abstract cold) */
+var PLAIN={
+  lineage:"Where this layout comes from — and why position means something.",
+  principles:"The one big idea: trees don't always cool a street.",
+  recipe:"How to run this yourself, step by step.",
+  definitions:"The words you'll meet here, in plain English.",
+  probe:"The live tool — this is the bit you actually do.",
+  tools:"The buttons and knobs under the hood.",
+  counter:"When planting backfires — the honest, awkward result.",
+  cases:"Three real cities, three different outcomes.",
+  exemplar:"When planting works — and what made the difference."
+};
+
+/* the guided pathway = a learning order through the cells (the jitterbug:
+   the equilibrium set in motion). Not the spatial reading order — a 2-min arc:
+   idea -> real cases -> honest fail -> the win -> DO it -> make your own. */
+var PATH=[
+  {id:"principles",t:"<b>The big idea.</b> Adding trees isn't automatically cooling — where and how you plant decides whether a street gets cooler or hotter."},
+  {id:"cases",     t:"<b>Real cities.</b> See it play out in three climates — Marseille, Cork, Rome — each with a different result."},
+  {id:"counter",   t:"<b>The honest fail.</b> In a dense Marseille canyon the trees made it <i>worse</i>. We kept that finding instead of hiding it."},
+  {id:"exemplar",  t:"<b>The win.</b> In open, maritime Cork the same move cooled the street and added variety. Placement is the whole skill."},
+  {id:"probe",     t:"<b>Now you do it.</b> Set a place, a scenario and a time → get a heat map, a heat-stress %, and a verdict. That's the input → output loop."},
+  {id:"recipe",    t:"<b>Make your own.</b> Reproduce it for any city — preview free first, then run a real simulation."}
+];
+var COORD={NW:[1,1],N:[3,1],NE:[5,1],W:[1,3],C:[3,3],E:[5,3],SW:[1,5],S:[3,5],SE:[5,5]};
+
 /* ---- render the nine cells ---- */
 var grid=document.getElementById("grid");
+var idxById={};
 CELLS.forEach(function(c,idx){
+  idxById[c.id]=idx;
   var el=document.createElement(c.centre?"div":"div");
   el.className="cell "+c.region+(c.centre?" centre":"");
   el.tabIndex=0; el.setAttribute("role","button");
@@ -538,6 +655,7 @@ CELLS.forEach(function(c,idx){
     '<div class="glyph">'+c.glyph+'</div>'+
     '<h3>'+c.title+'</h3>'+
     '<p class="one">'+c.one+'</p>'+
+    (PLAIN[c.id]?'<p class="plain"><b>In plain terms:</b> '+PLAIN[c.id]+'</p>':'')+
     '<div class="more">deep dive</div>';
   el.addEventListener("click",function(){openDeep(idx);});
   el.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();openDeep(idx);}});
@@ -593,6 +711,48 @@ function openByHash(){
 }
 openByHash();
 window.addEventListener("hashchange",openByHash);
+
+/* ================= guided pathway (jitterbug) tour ================= */
+var tourbar=document.getElementById("tourbar"),
+    tbNo=document.getElementById("tb-no"), tbText=document.getElementById("tb-text"),
+    tbDots=document.getElementById("tb-dots"), tbPrev=document.getElementById("tb-prev"),
+    tbNext=document.getElementById("tb-next"), trace=document.getElementById("trace"),
+    ts=0, hi=-1;
+tbDots.innerHTML=PATH.map(function(){return '<span class="dot"></span>';}).join("");
+
+function clearHi(){
+  if(hi>=0){var el=grid.children[hi];if(el){el.classList.remove("tour-active");
+    var b=el.querySelector(".step-badge");if(b)b.remove();}}
+  hi=-1;
+}
+function drawTrace(upto){
+  var pts=[];
+  for(var i=0;i<=upto;i++){var c=COORD[CELLS[idxById[PATH[i].id]].addr];pts.push(c[0]+","+c[1]);}
+  trace.innerHTML='<polyline points="'+pts.join(" ")+'"/>';
+}
+function tourStep(i){
+  ts=i; clearHi();
+  var cellIdx=idxById[PATH[i].id], el=grid.children[cellIdx];
+  hi=cellIdx; el.classList.add("tour-active");
+  var badge=document.createElement("span");
+  badge.className="step-badge"; badge.textContent=(i+1);
+  el.appendChild(badge);
+  el.scrollIntoView({behavior:"smooth",block:"center"});
+  tbNo.textContent=(i+1)+" / "+PATH.length;
+  tbText.innerHTML=PATH[i].t;
+  Array.prototype.forEach.call(tbDots.children,function(d,k){d.className="dot"+(k<=i?" on":"");});
+  tbPrev.disabled=(i===0);
+  tbNext.textContent=(i===PATH.length-1)?"Finish ✓":"Next ▸";
+  drawTrace(i);
+}
+function startTour(){ tourbar.classList.add("open"); tourStep(0); }
+function endTour(){ tourbar.classList.remove("open"); clearHi(); trace.innerHTML=""; }
+
+document.getElementById("start-here").addEventListener("click",startTour);
+document.getElementById("tb-open").addEventListener("click",function(){openDeep(idxById[PATH[ts].id]);});
+tbNext.addEventListener("click",function(){ if(ts<PATH.length-1)tourStep(ts+1); else endTour(); });
+tbPrev.addEventListener("click",function(){ if(ts>0)tourStep(ts-1); });
+document.getElementById("tb-end").addEventListener("click",endTour);
 </script>
 
 <script src="chrome.js" defer></script>

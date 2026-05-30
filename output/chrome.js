@@ -116,7 +116,8 @@
       '<a href="https://www.ucc.ie/en/at6012/" target="_blank" rel="noopener" title="Cork Centre for Architectural Education">' + CCAE + '</a>' +
       '<div class="ir-ctext">' +
         '<p>Primary author <strong>Maroun C. Tabbal</strong> · assisted by Claude (Anthropic).</p>' +
-        '<p>Seeded by <strong>Oana Taut</strong>’s guest lecture in <strong>AT6012</strong> (2025).</p>' +
+        '<p>Seeded by <strong>Oana Taut</strong>’s guest lecture in <strong>AT6012</strong> (2025). ' +
+        'UX feedback on the learning tool by <strong>Viktor Gekker</strong> (gratefully, on a Sunday).</p>' +
         '<p><strong>AT6012 — “Design Research: Technology Transformations”</strong>: HEA-subsidised CPD micro-credential (5 ECTS), next cohort <strong>23 Sep 2026</strong> · <a href="https://www.ucc.ie/en/at6012/" target="_blank" rel="noopener">ucc.ie/en/at6012</a></p>' +
       '</div>' +
     '</div></div>' +
