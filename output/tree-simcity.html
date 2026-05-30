@@ -882,71 +882,211 @@ function detectQuest(){
   vrBtn.onclick = enterVR;
 }
 
-// Minimal WebXR: present the live tile as a floating panel in the headset.
-// Beta. Verified logic in a 2D browser; the immersive session needs an
-// on-headset check (a 2D browser has no immersive-vr device).
-let _xr = { session:null, gl:null, tex:null, prog:null, buf:null, ref:null };
-function mat4mul(a,b){ const o=new Float32Array(16);
-  for(let r=0;r<4;r++)for(let c=0;c<4;c++){let s=0;for(let k=0;k<4;k++)s+=a[k*4+r]*b[c*4+k];o[c*4+r]=s;}return o; }
+// WebXR walkable urban forest. Three.js is loaded only when you enter VR, so the
+// flat game stays dependency-free. Beta, built without an on-headset test, so
+// please report what works. Locomotion: thumbstick or WASD to walk, trigger to
+// teleport, the other stick or the arrow keys to turn. A wellbeing reading rises
+// under diverse canopy shade and falls in the open street canyon, so moving has an
+// ecological purpose: walk or teleport to find the cool, regenerating ground.
+const THREE_URL = "https://unpkg.com/three@0.148.0/build/three.min.js";
+function loadThree(){
+  if (window.THREE) return Promise.resolve(window.THREE);
+  return new Promise((res, rej) => {
+    const s = document.createElement("script");
+    s.src = THREE_URL;
+    s.onload = () => res(window.THREE);
+    s.onerror = () => rej(new Error("3D library failed to load"));
+    document.head.appendChild(s);
+  });
+}
+
+let _xr = { session: null, renderer: null };
 async function enterVR(){
-  if (!(navigator.xr)) { flash("WebXR is not available here."); return; }
+  if (!navigator.xr){ flash("WebXR is not available here."); return; }
+  let THREE;
+  try { THREE = await loadThree(); }
+  catch(e){ flash("Could not load the 3D library (the headset needs internet)."); return; }
+  let session;
   try {
-    const session = await navigator.xr.requestSession("immersive-vr");
-    _xr.session = session;
-    const glcv = document.createElement("canvas");
-    const gl = glcv.getContext("webgl", { xrCompatible:true });
-    await gl.makeXRCompatible();
-    _xr.gl = gl;
-    session.updateRenderState({ baseLayer: new XRWebGLLayer(session, gl) });
-    _xr.ref = await session.requestReferenceSpace("local");
-    // shader: textured quad
-    const vs = `attribute vec3 p; attribute vec2 uv; varying vec2 v; uniform mat4 m;
-      void main(){ v=uv; gl_Position = m * vec4(p,1.0); }`;
-    const fs = `precision mediump float; varying vec2 v; uniform sampler2D t;
-      void main(){ gl_FragColor = texture2D(t, vec2(v.x, 1.0 - v.y)); }`;
-    const sh=(ty,src)=>{const s=gl.createShader(ty);gl.shaderSource(s,src);gl.compileShader(s);return s;};
-    const prog=gl.createProgram();
-    gl.attachShader(prog,sh(gl.VERTEX_SHADER,vs)); gl.attachShader(prog,sh(gl.FRAGMENT_SHADER,fs));
-    gl.linkProgram(prog); gl.useProgram(prog); _xr.prog=prog;
-    // quad 1.6 m wide, centred at eye height, 2.5 m ahead
-    const W=0.8,H=0.8,Y=1.3,Z=-2.5;
-    const verts=new Float32Array([
-      -W,Y-H,Z, 0,0,  W,Y-H,Z, 1,0,  W,Y+H,Z, 1,1,
-      -W,Y-H,Z, 0,0,  W,Y+H,Z, 1,1, -W,Y+H,Z, 0,1 ]);
-    const buf=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,buf);
-    gl.bufferData(gl.ARRAY_BUFFER,verts,gl.STATIC_DRAW); _xr.buf=buf;
-    const pl=gl.getAttribLocation(prog,"p"), ul=gl.getAttribLocation(prog,"uv");
-    gl.enableVertexAttribArray(pl); gl.vertexAttribPointer(pl,3,gl.FLOAT,false,20,0);
-    gl.enableVertexAttribArray(ul); gl.vertexAttribPointer(ul,2,gl.FLOAT,false,20,12);
-    const tex=gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D,tex);
-    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
-    _xr.tex=tex;
-    const mloc=gl.getUniformLocation(prog,"m");
-    session.addEventListener("end", ()=>{ _xr.session=null; });
-    const onXR=(t,frame)=>{
-      if(!_xr.session) return;
-      _xr.session.requestAnimationFrame(onXR);
-      const pose=frame.getViewerPose(_xr.ref); if(!pose) return;
-      const layer=_xr.session.renderState.baseLayer;
-      gl.bindFramebuffer(gl.FRAMEBUFFER, layer.framebuffer);
-      gl.clearColor(0.05,0.12,0.08,1); gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-      gl.bindTexture(gl.TEXTURE_2D,tex);
-      gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,cv);  // live game canvas
-      for(const view of pose.views){
-        const vp=layer.getViewport(view);
-        gl.viewport(vp.x,vp.y,vp.width,vp.height);
-        const mvp=mat4mul(view.projectionMatrix, view.transform.inverse.matrix);
-        gl.uniformMatrix4fv(mloc,false,mvp);
-        gl.drawArrays(gl.TRIANGLES,0,6);
+    session = await navigator.xr.requestSession("immersive-vr",
+      { optionalFeatures: ["local-floor"] });
+  } catch(e){ flash("VR session could not start: " + (e.message || e)); return; }
+  _xr.session = session;
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.xr.enabled = true;
+  try { renderer.xr.setReferenceSpaceType("local-floor"); } catch(e){}
+  renderer.domElement.style.display = "none";
+  document.body.appendChild(renderer.domElement);
+  await renderer.xr.setSession(session);
+  _xr.renderer = renderer;
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x9ec7e3);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x335522, 1.1));
+  const sun = new THREE.DirectionalLight(0xffffff, 0.7);
+  sun.position.set(6, 12, 4); scene.add(sun);
+
+  // player rig: move this group to locomote
+  const camera = new THREE.PerspectiveCamera(70, 1, 0.05, 200);
+  const player = new THREE.Group();
+  player.add(camera); scene.add(player);
+  player.position.set(N / 2, 0, N + 2.5);   // south edge, looking into the tile
+
+  const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(80, 80),
+    new THREE.MeshStandardMaterial({ color: 0x4f7a3a }));
+  ground.rotation.x = -Math.PI / 2; scene.add(ground);
+
+  // build the 8x8 tile and its trees from the live game state (1 m per cell)
+  const tileGroup = new THREE.Group(); scene.add(tileGroup);
+  (function buildTile(){
+    for (const c of grid){
+      const cell = new THREE.Mesh(
+        new THREE.BoxGeometry(0.96, 0.06, 0.96),
+        new THREE.MeshStandardMaterial({ color: c.canyon ? 0x6b5535 : 0x8a6b3a }));
+      cell.position.set(c.x + 0.5, 0.03, c.y + 0.5); tileGroup.add(cell);
+      const t = c.tree; if (!t) continue;
+      const s = SP[t.sp];
+      const trunkH = t.state === "seed" ? 0.12 : t.state === "sapling" ? 0.5 : Math.max(0.9, t.crown * 1.3);
+      const trunk = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.05, 0.08, trunkH, 6),
+        new THREE.MeshStandardMaterial({ color: 0x6b4a2a }));
+      trunk.position.set(c.x + 0.5, trunkH / 2, c.y + 0.5); tileGroup.add(trunk);
+      if (t.state !== "seed"){
+        const r = t.state === "sapling" ? 0.2 : Math.max(0.35, t.crown * 0.55);
+        const canopy = new THREE.Mesh(
+          new THREE.SphereGeometry(r, 10, 8),
+          new THREE.MeshStandardMaterial({ color: new THREE.Color(s.color) }));
+        canopy.position.set(c.x + 0.5, trunkH + r * 0.6, c.y + 0.5); tileGroup.add(canopy);
       }
-    };
-    _xr.session.requestAnimationFrame(onXR);
-    log("Entered immersive VR. Look ahead for the tile panel.", "ev");
-  } catch(e){
-    flash("VR session could not start: " + (e && e.message ? e.message : e));
+    }
+  })();
+
+  // teleport marker + controller rays
+  const marker = new THREE.Mesh(
+    new THREE.RingGeometry(0.18, 0.26, 24),
+    new THREE.MeshBasicMaterial({ color: 0xFFC72C }));
+  marker.rotation.x = -Math.PI / 2; marker.visible = false; scene.add(marker);
+  const raycaster = new THREE.Raycaster();
+  const tmpM = new THREE.Matrix4();
+  const controllers = [];
+  for (let i = 0; i < 2; i++){
+    const ctrl = renderer.xr.getController(i);
+    player.add(ctrl); controllers.push(ctrl);
+    const line = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,-1)]),
+      new THREE.LineBasicMaterial({ color: 0xFFC72C }));
+    line.scale.z = 6; ctrl.add(line);
+    ctrl.addEventListener("selectstart", () => { ctrl.userData.aiming = true; });
+    ctrl.addEventListener("selectend", () => {
+      ctrl.userData.aiming = false;
+      if (marker.visible){ player.position.x = marker.position.x; player.position.z = marker.position.z; }
+    });
   }
+
+  // keyboard (a paired headset keyboard, or desktop XR)
+  const keys = {};
+  const onKd = e => { keys[e.key.toLowerCase()] = true; };
+  const onKu = e => { keys[e.key.toLowerCase()] = false; };
+  window.addEventListener("keydown", onKd); window.addEventListener("keyup", onKu);
+
+  // head-locked wellbeing panel
+  const hudCv = document.createElement("canvas"); hudCv.width = 256; hudCv.height = 140;
+  const hctx = hudCv.getContext("2d");
+  const hudTex = new THREE.CanvasTexture(hudCv);
+  const hud = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.46, 0.25),
+    new THREE.MeshBasicMaterial({ map: hudTex, transparent: true }));
+  hud.position.set(0, -0.32, -0.9); camera.add(hud);
+
+  let wellbeing = 50;
+  function localEcology(px, pz){
+    let shade = 0; const sp = new Set();
+    for (const c of grid){
+      const t = c.tree; if (!t || (t.state !== "grown" && t.state !== "transplanted")) continue;
+      const d = Math.hypot((c.x + 0.5) - px, (c.y + 0.5) - pz);
+      if (d < Math.max(0.6, t.crown * 0.6) + 0.6){ shade++; sp.add(t.sp); }
+    }
+    const onTile = px >= 0 && px < N && pz >= 0 && pz < N;
+    const canyon = onTile && (Math.floor(px) === 3 || Math.floor(px) === 4);
+    return { shade, diversity: sp.size, canyon };
+  }
+  function drawHud(eco){
+    hctx.clearRect(0,0,256,140);
+    hctx.fillStyle = "rgba(16,16,16,0.8)"; hctx.fillRect(0,0,256,140);
+    hctx.fillStyle = "#FAFAF7"; hctx.font = "bold 22px Arial";
+    hctx.fillText("Wellbeing " + Math.round(wellbeing), 14, 32);
+    hctx.fillStyle = "#E6E6E6"; hctx.font = "13px Arial";
+    const msg = eco.shade > 0 ? ("Shade from " + eco.diversity + " species")
+              : eco.canyon ? "Open canyon, hot and exposed" : "Open ground";
+    hctx.fillText(msg, 14, 58);
+    hctx.fillStyle = "#444"; hctx.fillRect(14, 74, 228, 14);
+    hctx.fillStyle = wellbeing >= 66 ? "#1f6b3a" : wellbeing >= 40 ? "#FFC72C" : "#A1242E";
+    hctx.fillRect(14, 74, 228 * Math.max(0, Math.min(1, wellbeing / 100)), 14);
+    hctx.fillStyle = "#cfcfcf"; hctx.font = "11px Arial";
+    hctx.fillText("Walk: stick / WASD", 14, 108);
+    hctx.fillText("Teleport: trigger    Turn: stick / arrows", 14, 126);
+    hudTex.needsUpdate = true;
+  }
+
+  // locomotion loop
+  const SPEED = 1.6, TURN = 1.6;   // metres/s, radians/s
+  let last = 0;
+  function headYaw(){
+    const xrCam = renderer.xr.getCamera();
+    return new THREE.Euler().setFromQuaternion(xrCam.quaternion, "YXZ").y;
+  }
+  function tick(time){
+    const dt = last ? Math.min(0.05, (time - last) / 1000) : 0.016; last = time;
+    let mx = 0, mz = 0, turn = 0;
+    if (_xr.session){
+      for (const src of _xr.session.inputSources){
+        if (!src.gamepad) continue;
+        const ax = src.gamepad.axes;
+        const a2 = ax[2] !== undefined ? ax[2] : (ax[0] || 0);
+        const a3 = ax[3] !== undefined ? ax[3] : (ax[1] || 0);
+        if (src.handedness === "right"){ if (Math.abs(a2) > 0.2) turn -= a2; }
+        else { if (Math.abs(a2) > 0.15) mx += a2; if (Math.abs(a3) > 0.15) mz += a3; }
+      }
+    }
+    if (keys["a"]) mx -= 1; if (keys["d"]) mx += 1;
+    if (keys["w"]) mz -= 1; if (keys["s"]) mz += 1;
+    if (keys["arrowleft"]) turn += 1; if (keys["arrowright"]) turn -= 1;
+
+    player.rotation.y += turn * TURN * dt;
+    const yaw = headYaw();                       // world yaw, already includes the rig
+    player.position.x += (mx * Math.cos(yaw) + mz * Math.sin(yaw)) * SPEED * dt;
+    player.position.z += (mz * Math.cos(yaw) - mx * Math.sin(yaw)) * SPEED * dt;
+
+    marker.visible = false;
+    for (const ctrl of controllers){
+      if (!ctrl.userData.aiming) continue;
+      tmpM.identity().extractRotation(ctrl.matrixWorld);
+      raycaster.ray.origin.setFromMatrixPosition(ctrl.matrixWorld);
+      raycaster.ray.direction.set(0,0,-1).applyMatrix4(tmpM).normalize();
+      const hit = raycaster.intersectObject(ground)[0];
+      if (hit){ marker.position.copy(hit.point); marker.position.y = 0.02; marker.visible = true; }
+    }
+
+    const eco = localEcology(player.position.x, player.position.z);
+    const target = eco.shade > 0 ? Math.min(100, 55 + eco.diversity * 12)
+                 : eco.canyon ? 25 : 45;
+    wellbeing += (target - wellbeing) * Math.min(1, dt * 0.8);
+    drawHud(eco);
+
+    renderer.render(scene, camera);
+  }
+  renderer.setAnimationLoop(tick);
+
+  session.addEventListener("end", () => {
+    renderer.setAnimationLoop(null);
+    window.removeEventListener("keydown", onKd);
+    window.removeEventListener("keyup", onKu);
+    try { renderer.domElement.remove(); renderer.dispose(); } catch(e){}
+    _xr.session = null;
+  });
+  log("Entered immersive VR. Walk or teleport across the tile.", "ev");
 }
 
 reset();
