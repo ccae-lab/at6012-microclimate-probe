@@ -93,7 +93,19 @@ def rome_site() -> Site:
                 weather_hint="Rome")
 
 
-SITES = {"marseille": marseille_site, "cork": cork_site, "rome": rome_site}
+def london_site() -> Site:
+    # City of London, around Cheapside and Bank. This is where GUS.earth has
+    # real per-tree data (species, DBH, crown, condition), so it is the site that
+    # turns the GUS rung from a stub into an explorable journey: a dense
+    # street-canyon core with authoritative street-tree attributes.
+    lat, lon = 51.5150, -0.0950
+    return Site(name="London, City (Cheapside)", lat=lat, lon=lon,
+                polygon=_square(lat, lon, 0.0036),  # ~800 m site
+                weather_hint="London")
+
+
+SITES = {"marseille": marseille_site, "cork": cork_site,
+         "rome": rome_site, "london": london_site}
 
 
 def bbox_of(polygon: dict) -> tuple:
@@ -138,7 +150,7 @@ def _points_to_veg(fc: dict, tag: str) -> dict:
             "type": "Feature", "id": f"{tag}/{i}", "geometry": geom,
             "properties": {"natural": "tree", "species": p.get("species"),
                            "genus": p.get("genus"), "leaf_type": p.get("leaf_type"),
-                           "leaf_cycle": None, "height": p.get("height"),
+                           "leaf_cycle": p.get("leaf_cycle"), "height": p.get("height"),
                            "circumference": None,
                            "diameter_crown": crown},
         }
@@ -157,36 +169,16 @@ def roboflow_vegetation(site: Site) -> dict:
 
 
 def gus_vegetation(site: Site) -> dict:
-    """Tier-3 keyed vegetation: per-tree records from GUS.earth (species, DBH,
-    condition). GET /api/v1/gus/trees returns a list of tree records; field names
-    are normalised defensively here and confirmed on first live run."""
+    """Tier-3 keyed vegetation: real per-tree records from GUS.earth, enriched
+    with species, crown width, height and deciduous/evergreen class via the
+    list-then-batch detail fetch. Coverage is wherever the account has trees
+    (London for this project, so pair this with --site london)."""
     import city_data as cd
-    data = cd.gus_trees(bbox_of(site.polygon))
-    records = (data if isinstance(data, list)
-               else data.get("trees") or data.get("features") or data.get("results") or [])
-    veg = {}
-    for i, rec in enumerate(records):
-        if not isinstance(rec, dict):
-            continue
-        lon = rec.get("lng") or rec.get("longitude") or rec.get("lon")
-        lat = rec.get("lat") or rec.get("latitude")
-        geom = rec.get("geometry")
-        if geom and geom.get("type") == "Point":
-            lon, lat = geom["coordinates"][0], geom["coordinates"][1]
-        if lon is None or lat is None:
-            continue
-        dbh = rec.get("dbh") or rec.get("diameter")
-        veg[f"gus/{i}"] = {
-            "type": "Feature", "id": f"gus/{i}",
-            "geometry": {"type": "Point", "coordinates": [lon, lat]},
-            "properties": {"natural": "tree",
-                           "species": rec.get("species") or rec.get("species_name"),
-                           "genus": rec.get("genus"), "leaf_type": None, "leaf_cycle": None,
-                           "height": rec.get("height"), "circumference": None,
-                           "diameter_crown": rec.get("crown") or rec.get("canopy_diameter")},
-        }
-    print(f"  gus: {len(veg)} trees")
-    return veg
+    fc = cd.gus_trees_detailed(bbox_of(site.polygon))
+    feats = fc.get("features", [])
+    species = {f["properties"].get("species") for f in feats}
+    print(f"  gus: {len(feats)} trees, {len([s for s in species if s])} distinct species")
+    return _points_to_veg(fc, "gus")
 
 
 # Summer afternoon window (Marseille August baseline, matching the AT6012 toolkit).
