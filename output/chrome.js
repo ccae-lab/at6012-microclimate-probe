@@ -21,7 +21,7 @@
   // Submission deadline: Sunday 31 May 2026, end of day (CEST = UTC+2).
   var DEADLINE = new Date("2026-05-31T23:59:59+02:00");
 
-  // CCAE mark — vector-traced from the official Cork Centre for Architectural
+  // CCAE mark, vector-traced from the official Cork Centre for Architectural
   // Education logo (faceted 7-gon outline + interior fold facets). Inherits
   // currentColor so it sits on dark (banner) and light contexts alike.
   var CCAE =
@@ -102,11 +102,11 @@
         "<li>" + ext([["https://github.com/ccae-lab/infrared-skills", "SDK Skill (CCAE fork)"]])[0] + "</li>" +
         "<li>" + ext([["https://slides.infrared.city/buildathon-launch-2026/", "Day-1 slide deck"]])[0] + "</li>" +
       "</ul></div>" +
-      '<div><h4>Day 3 — final day (CEST)</h4><ul>' +
-        "<li>09:00–10:00 — Morning Q&A</li>" +
-        "<li>17:00–19:00 — Closing session</li>" +
+      '<div><h4>Day 3, final day (CEST)</h4><ul>' +
+        "<li>09:00-10:00, Morning Q&A</li>" +
+        "<li>17:00-19:00, Closing session</li>" +
         "<li><strong>Submission: Sun, EOD</strong></li>" +
-        "<li>Mon — showcase &amp; sharing</li>" +
+        "<li>Mon, showcase &amp; sharing</li>" +
       "</ul></div>" +
       '<div><h4>curricula.dev triad</h4><ul>' +
         ext(TRIAD).map(function (a) { return "<li>" + a + "</li>"; }).join("") +
@@ -118,7 +118,7 @@
         '<p>Primary author <strong>Maroun C. Tabbal</strong> · assisted by Claude (Anthropic).</p>' +
         '<p>Seeded by <strong>Oana Taut</strong>’s guest lecture in <strong>AT6012</strong> (2025). ' +
         'UX feedback on the learning tool by <strong>Viktor Gekker</strong> (gratefully, on a Sunday).</p>' +
-        '<p><strong>AT6012 — “Design Research: Technology Transformations”</strong>: HEA-subsidised CPD micro-credential (5 ECTS), next cohort <strong>23 Sep 2026</strong> · <a href="https://www.ucc.ie/en/at6012/" target="_blank" rel="noopener">ucc.ie/en/at6012</a></p>' +
+        '<p><strong>AT6012: “Design Research: Technology Transformations”</strong>: HEA-subsidised CPD micro-credential (5 ECTS), next cohort <strong>23 Sep 2026</strong> · <a href="https://www.ucc.ie/en/at6012/" target="_blank" rel="noopener">ucc.ie/en/at6012</a></p>' +
       '</div>' +
     '</div></div>' +
     '<div class="ir-bottom">AT6012 Design Research · CCAE / UCC School of Architecture · Primary author Maroun C. Tabbal, assisted by Claude · infrared.city SDK 0.4.9</div>';

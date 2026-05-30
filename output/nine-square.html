@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Twining — the synergetic 9-square | infrared Probe · AT6012</title>
+<title>Twining: the synergetic 9-square | infrared Probe · AT6012</title>
 <meta name="description" content="A vector-equilibrium 9-square navigator for the Regenerative Microclimate Probe. Position carries meaning: top=principles, bottom=special cases, centre=the live probe." />
 <style>
   /* ============================================================
-     TWINING — the synergetic nine-square.
+     TWINING: the synergetic nine-square.
      Lineage: SCI-Arc / Buckminster Fuller Institute -> syncad.org/Handbook
      -> AT6012 (CCAE / UCC). The law: POSITION CARRIES MEANING.
        N (top)    = Generalised Principles
@@ -18,10 +18,10 @@
      ============================================================ */
   :root{
     --ink:#14202c; --muted:#5b6b7a; --line:#dbe3ec; --paper:#eef1f4;
-    --north:#3b3f8f;       /* principle band — indigo (cool / abstract) */
-    --south:#b07a16;       /* special band  — amber (warm / concrete)  */
-    --west:#2c6e7a;        /* definitions   — teal                      */
-    --east:#a23b2e;        /* tools / action — rust                     */
+    --north:#3b3f8f;       /* principle band, indigo (cool / abstract) */
+    --south:#b07a16;       /* special band, amber (warm / concrete)  */
+    --west:#2c6e7a;        /* definitions, teal                         */
+    --east:#a23b2e;        /* tools / action, rust                     */
     --centre:#0f1b2a;      /* the nuclear vertex                        */
     --tick-odd:#cdd7e1; --tick-even:#eef2f6;
   }
@@ -78,7 +78,7 @@
   /* laptop+: the full nine-square */
   @media (min-width:960px){ .grid{grid-template-columns:repeat(3,1fr);grid-auto-rows:1fr} }
 
-  /* the vector-equilibrium truss — the GRID itself, not wallpaper.
+  /* the vector-equilibrium truss, the GRID itself.
      Only drawn once the true 3x3 exists. */
   .ve{position:absolute;inset:8px;z-index:1;display:none;pointer-events:none}
   @media (min-width:960px){ .ve{display:block} }
@@ -118,7 +118,7 @@
     letter-spacing:.04em;color:var(--rail);opacity:.85}
   .cell .more::after{content:" ↗"}
 
-  /* the centre is the nuclear vertex — it visibly bridges N & S */
+  /* the centre is the nuclear vertex, it visibly bridges N and S */
   .cell.centre{background:linear-gradient(180deg,#15233a,#0f1b2a);color:#eaf0f6;border-color:#243245}
   .cell.centre .role{color:#ffd9b3}
   .cell.centre h3{color:#fff}
@@ -263,15 +263,28 @@
   .io .box.in h5{color:#2c5f8f}.io .box.out h5{color:#1e6b3a}
   .io .arrow{align-self:center;font-size:24px;color:var(--south);font-weight:800}
   .io ul{margin:0;padding-left:17px}.io li{margin:4px 0;font-size:13px}
+
+  /* ---- worked-example readout (Viktor: make the output more explicit) ---- */
+  .readout{display:flex;gap:12px;flex-wrap:wrap;margin:6px 0 14px}
+  .rcard{flex:1 1 240px;border:1px solid var(--line);border-radius:11px;padding:13px 15px;background:#fbfcfd}
+  .rcard.worse{border-left:4px solid #a23b2e}
+  .rcard.better{border-left:4px solid #1e6b3a}
+  .rcity{font-weight:800;font-size:13px;margin:0 0 8px;color:#2b3947}
+  .rtab{width:100%;border-collapse:collapse;font-size:13px;margin:0}
+  .rtab td{padding:4px 0;border-bottom:1px solid #eef1f4;border-top:0;border-left:0;border-right:0}
+  .rtab td:last-child{text-align:right;font-variant-numeric:tabular-nums;text-transform:none}
+  .verdict{margin-top:9px;font-size:12.5px;font-weight:700;border-radius:7px;padding:7px 10px}
+  .verdict.worse{background:#fbeeec;color:#a23b2e}
+  .verdict.better{background:#ecf7f0;color:#1e6b3a}
 </style>
 </head>
 <body>
 
 <div class="intro">
-  <h1>Twining <span class="glyph">相生</span> — the synergetic nine-square</h1>
-  <p class="plainlead"><span class="tag">In plain terms</span>Pick a place, add trees, and see whether the street gets cooler — or hotter. Sometimes more trees makes it worse; this tool shows when, and why.</p>
+  <h1>Twining <span class="glyph">相生</span>: the synergetic nine-square</h1>
+  <p class="plainlead"><span class="tag">In plain terms</span>Pick a place, add trees, and see whether the street gets cooler, or hotter. Sometimes more trees makes it worse; this tool shows when, and why.</p>
   <p>A vector-equilibrium navigator for the Regenerative Microclimate Probe.
-     <b>Position carries meaning.</b> The vertical axis is an abstraction gradient —
+     <b>Position carries meaning.</b> The vertical axis is an abstraction gradient:
      top is <b>generalised principle</b>, bottom is <b>special-case scenario</b>. The centre
      is the <b>live probe</b>, twining principle (above) with case (below).</p>
   <div class="legend">
@@ -371,122 +384,144 @@ var K = {
 };
 
 var CELLS = [
-  /* ---------------- TOP ROW — generalised principle ---------------- */
+  /* ---------------- TOP ROW: generalised principle ---------------- */
   { id:"lineage", addr:"NW", coord:"[−3·N]", role:"Lineage", region:"r-corner",
     glyph:"🜨", title:"Lineage", one:"SCI-Arc → Fuller → syncad → AT6012. Why position carries meaning.",
     dh:"#3b3f8f",
     body:`<h4>The seminal law</h4>
       <p>This figure is a <b>synergetic nine-square</b>, an organising frame developed at
-      <b>SCI-Arc</b> and presented at the <b>Buckminster Fuller Institute</b> (c.1994–95).
+      <b>SCI-Arc</b> and presented at the <b>Buckminster Fuller Institute</b> (c.1994-95).
       A 3×3 indexed by <i>left/right · top/bottom · odd/even</i>, where <b>position is address</b>
-      and <b>position carries meaning</b> — not decoration, not a flat list.</p>
+      and <b>position carries meaning</b>. Every cell earns its place.</p>
       <h4>The reference chain</h4>
       <ul>
         <li><b>Seminal:</b> <a href="https://syncad.org/Handbook/" target="_blank" rel="noopener">syncad.org/Handbook</a>
-            — an HTML frameset that <i>is</i> a literal nine-square (header/footer/left/right margins + body),
+            is a literal nine-square (header/footer/left/right margins + body),
             a periodic-table matrix of square tiles with a numeric ruler on both edges. "SYNERGY 共生" at the heart.</li>
-        <li><b>Recent miss:</b> energetic.curricula.dev — Fuller vector-equilibrium geometry as <i>wallpaper</i>, not the grid.</li>
-        <li><b>Recent miss:</b> design.curricula.dev — geometry dropped entirely; a flat sitemap.</li>
+        <li><b>Recent miss:</b> energetic.curricula.dev: Fuller vector-equilibrium geometry used as <i>wallpaper</i> behind the page.</li>
+        <li><b>Recent miss:</b> design.curricula.dev: geometry dropped entirely, a flat sitemap.</li>
         <li><b>Here:</b> the geometry <i>is</i> the navigation grid again.</li>
       </ul>
       <h4>The CER lineage it carries</h4>
       <p>community-engagement.eu (Campus Engage / National Forum Ireland) → SPACE Erasmus+ → ENGAGE.
       Boyer's Scholarship of Engagement; the Engagement Spectrum; reciprocity as the ethical core.</p>
-      <p class="callout">The vector equilibrium (cuboctahedron): 12 vertices around 1 nucleus, all edges equal —
+      <p class="callout">The vector equilibrium (cuboctahedron): 12 vertices around 1 nucleus, all edges equal,
       Fuller's figure of <i>equilibrium</i>. Its 12 ruler-ticks edge this frame.</p>
       <h4>Acknowledgements</h4>
       <p>The guided 2-minute pathway, the plain-language layer and the explicit input→output framing
       were added in response to <b>Viktor Gekker</b>'s sharp, generous feedback on the standalone learning
-      tool — given on a Sunday, and much appreciated.</p>` },
+      tool, given on a Sunday, and much appreciated.</p>` },
 
   { id:"principles", addr:"N", coord:"[0·N]", role:"Generalised principle", region:"r-north",
-    glyph:"⚖", title:"The regenerative law", one:"Trees are not automatically regenerative. Placement, density & geometry decide.",
+    glyph:"⚖", title:"The regenerative law", one:"Placement, density and geometry decide whether trees cool a street or heat it.",
     dh:"#3b3f8f",
     body:`<h4>The principle</h4>
-      <p><b>Adding canopy is not automatically regenerative.</b> The same intervention that cools an
+      <p><b>Adding canopy changes a microclimate for better or worse.</b> The same planting that cools an
       open plaza can <i>trap</i> radiant heat and cut ventilation in a dense street canyon. Skill is
-      <b>right species, right place, right density</b> — not "more trees".</p>
+      <b>right species, right place, right density</b>.</p>
       <h4>UTCI thermal bands</h4>
       <table><thead><tr><th>UTCI (°C)</th><th>Stress category</th></tr></thead><tbody>
         <tr><td>&gt; 38</td><td>Very strong / extreme heat stress</td></tr>
-        <tr><td>26 – 38</td><td>Moderate–strong heat stress</td></tr>
-        <tr><td>9 – 26</td><td>No thermal stress (comfort)</td></tr>
+        <tr><td>26 to 38</td><td>Moderate to strong heat stress</td></tr>
+        <tr><td>9 to 26</td><td>No thermal stress (comfort)</td></tr>
         <tr><td>&lt; 9</td><td>Cold stress</td></tr>
       </tbody></table>
       <h4>How heat-stress % is measured</h4>
       <div class="eq">heat-stress&nbsp;% &nbsp;=&nbsp; <b>count(UTCI&gt;26 °C)</b> &nbsp;/&nbsp; count(valid cells) &nbsp;×&nbsp;100</div>
       <p class="callout">Measurement honesty: canopy <i>masks</i> the grid cells beneath it, so a baseline-vs-intervention
-      percentage isn't strictly apples-to-apples. The probe reports this rather than sanding it off.</p>
+      percentage is not strictly comparable. The probe reports this openly.</p>
       <h4>Thermal Assembly Complexity Index</h4>
-      <p>Beyond a single mean, the probe scores the <i>diversity</i> of thermal zones (TACI) — a richer,
+      <p>Beyond a single mean, the probe scores the <i>diversity</i> of thermal zones (TACI): a richer,
       more navigable microclimate is itself a regenerative quality.</p>` },
 
   { id:"recipe", addr:"NE", coord:"[+3·N]", role:"Recipe", region:"r-corner",
-    glyph:"⛭", title:"Recipe", one:"Reproduce it yourself — preview-first, then run a city at €0 risk.",
+    glyph:"⛭", title:"Recipe", one:"Reproduce it yourself: preview first, then run a city at €0 risk.",
     dh:"#3b3f8f",
     body:`<h4>The generalised method (self-serve)</h4>
       <ol class="ladder">
-        <li><b>Install</b> — <code>pip install -r requirements.txt</code> (pins infrared-sdk 0.4.9).</li>
-        <li><b>Key</b> — copy <code>.env.example</code> → <code>.env</code>, set <code>INFRARED_API_KEY</code>.</li>
-        <li><b>Verify</b> — <code>python verify_setup.py</code> (no quota cost).</li>
-        <li><b>Preview</b> — <code>client.preview_area(polygon, analysis_type=...)</code>: tiling, <b>no jobs, no billing</b>.</li>
-        <li><b>Run</b> — <code>python scorecard.py --run --max-tiles N</code> submits the <i>billable</i> area job.</li>
+        <li><b>Install</b>: <code>pip install -r requirements.txt</code> (pins infrared-sdk 0.4.9).</li>
+        <li><b>Key</b>: copy <code>.env.example</code> → <code>.env</code>, set <code>INFRARED_API_KEY</code>.</li>
+        <li><b>Verify</b>: <code>python verify_setup.py</code> (no quota cost).</li>
+        <li><b>Preview</b>: <code>client.preview_area(polygon, analysis_type=...)</code>: tiling, <b>no jobs, no billing</b>.</li>
+        <li><b>Run</b>: <code>python scorecard.py --run --max-tiles N</code> submits the <i>billable</i> area job.</li>
       </ol>
-      <div class="eq">Cost guard: <b>the scenario, not the tap, is the billable unit.</b><br>
+      <div class="eq">Cost guard: <b>the baked scenario is the billable unit.</b><br>
       Default (no <b>--run</b>) only previews. Never launch a billable run without intent.</div>
       <h4>Enrichment ladder</h4>
       <p>The SDK's vegetation is attribute-poor (null species). Climb the ladder to enrich it:</p>
       <ol class="ladder">
         <li>SDK vegetation (geometry, null attributes)</li>
-        <li>City open data — Rome WFS street-trees (species!), Marseille ODS parks, Cork CKAN/TPO</li>
-        <li>Earth-observation — ESA WorldCover land-cover, Sentinel-2 NDVI</li>
+        <li>City open data: Rome WFS street-trees (species!), Marseille ODS parks, Cork CKAN/TPO</li>
+        <li>Earth-observation: ESA WorldCover land-cover, Sentinel-2 NDVI</li>
         <li>Roboflow detection on aerial tiles</li>
         <li>GUS.earth per-tree species + growth simulation</li>
       </ol>
       <p><a class="btn" href="api-guide.html">Open the full Data &amp; API guide ▸</a>
          <a class="btn alt" href="https://github.com/ccae-lab/at6012-microclimate-probe" target="_blank" rel="noopener">Source on GitHub</a></p>` },
 
-  /* ---------------- MIDDLE ROW — definitions · PROBE · tools ---------------- */
+  /* ---------------- MIDDLE ROW: definitions · PROBE · tools ---------------- */
   { id:"definitions", addr:"W", coord:"[−3·M]", role:"Definitions", region:"r-west",
     glyph:"📖", title:"The lexicon", one:"UTCI · heat-stress % · TACI · vector equilibrium · twining.",
     dh:"#2c6e7a",
     body:`<h4>Microclimate</h4>
       <ul>
-        <li><b>UTCI</b> — Universal Thermal Climate Index (°C): perceived temperature integrating air temp,
+        <li><b>UTCI</b>: Universal Thermal Climate Index in °C. Perceived temperature integrating air temp,
           radiant heat, humidity and wind.</li>
-        <li><b>Heat-stress %</b> — share of valid grid cells with UTCI &gt; 26 °C.</li>
-        <li><b>TACI</b> — Thermal Assembly Complexity Index: diversity of thermal zones across the tile.</li>
-        <li><b>WorldCover classes</b> — ESA land-cover: Built-up, Tree cover, Grassland, Water, Cropland, Bare/sparse.</li>
-        <li><b>Preview vs Run</b> — <i>preview</i> tiles a polygon for free; <i>run</i> submits a billable simulation job.</li>
+        <li><b>Heat-stress %</b>: share of valid grid cells with UTCI &gt; 26 °C.</li>
+        <li><b>TACI</b>: Thermal Assembly Complexity Index, the diversity of thermal zones across the tile.</li>
+        <li><b>WorldCover classes</b>: ESA land-cover (Built-up, Tree cover, Grassland, Water, Cropland, Bare/sparse).</li>
+        <li><b>Preview and Run</b>: <i>preview</i> tiles a polygon for free; <i>run</i> submits a billable simulation job.</li>
       </ul>
       <h4>Synergetic geometry</h4>
       <ul>
-        <li><b>Vector equilibrium (VE)</b> — Fuller's cuboctahedron: 12 vertices around 1 nucleus, all edges equal.
-          The figure of equilibrium; the truss behind this grid.</li>
-        <li><b>Jitterbug</b> — the VE's transformation through icosa/octa/tetra as it contracts; equilibrium in motion.</li>
-        <li><b>Twining (相生 / mutual arising)</b> — interlacing the general (above) and the special (below)
-          <i>through</i> the centre. Warp &amp; weft of principle and particular.</li>
-        <li><b>Address</b> — a cell's <i>position</i> (left/right · top/bottom · odd/even) is its meaning.</li>
+        <li><b>Vector equilibrium (VE)</b>: Fuller's cuboctahedron, 12 vertices around 1 nucleus, all edges equal.
+          The figure of equilibrium, the truss behind this grid.</li>
+        <li><b>Jitterbug</b>: the VE's transformation through icosa/octa/tetra as it contracts; equilibrium in motion.</li>
+        <li><b>Twining (相生 / mutual arising)</b>: interlacing the general (above) and the special (below)
+          <i>through</i> the centre. Warp and weft of principle and particular.</li>
+        <li><b>Address</b>: a cell's <i>position</i> (left/right · top/bottom · odd/even) is its meaning.</li>
       </ul>` },
 
   { id:"probe", addr:"C", coord:"[0·M]", role:"The live instance", region:"r-centre", centre:true,
-    glyph:"🛰", title:"The live Probe", one:"The nuclear vertex — between principle (above) and case (below).",
+    glyph:"🛰", title:"The live Probe", one:"The nuclear vertex, between principle (above) and case (below).",
     dh:"#0f1b2a",
-    body:`<p>The centre always sits <b>between</b> principle (the row above) and case (the row below) —
-      this is the twining. Here it is the <b>live Microclimate Probe</b>: the one cell where you <i>do</i> something.</p>
+    body:`<p>The centre always sits <b>between</b> principle (the row above) and case (the row below).
+      This is the twining. Here it is the <b>live Microclimate Probe</b>: the one cell where you <i>do</i> something.</p>
       <h4>What goes in, what comes out</h4>
       <div class="io">
         <div class="box in"><h5>① You set (input)</h5><ul>
-          <li><b>Where</b> — a location (click the map or pick a preset city)</li>
-          <li><b>What-if</b> — a scenario: baseline vs. add vegetation</li>
-          <li><b>When</b> — month · day · hour (and wind speed/direction)</li>
+          <li><b>Where</b>: a location (click the map or pick a preset city)</li>
+          <li><b>What-if</b>: a scenario, baseline or with added vegetation</li>
+          <li><b>When</b>: month · day · hour (and wind speed and direction)</li>
         </ul></div>
         <div class="arrow" aria-hidden="true">→</div>
         <div class="box out"><h5>② You get (output)</h5><ul>
-          <li><b>A heat map</b> — UTCI / wind / solar over the tile</li>
-          <li><b>A number</b> — heat-stress %, mean UTCI, zone diversity</li>
-          <li><b>A verdict</b> — did the trees help, or backfire?</li>
+          <li><b>A heat map</b>: UTCI / wind / solar over the tile</li>
+          <li><b>A number</b>: heat-stress %, mean UTCI, zone diversity</li>
+          <li><b>A verdict</b>: did the trees help, or backfire?</li>
         </ul></div>
+      </div>
+      <h4>A real result, read out</h4>
+      <p>Two runs from the case studies, so the output is concrete. Same move, two streets, two verdicts.</p>
+      <div class="readout">
+        <div class="rcard worse">
+          <p class="rcity">Marseille · dense canyon</p>
+          <table class="rtab"><tbody>
+            <tr><td>Heat-stress</td><td>79.1% → <b>83.0%</b></td></tr>
+            <tr><td>Mean UTCI</td><td>27.3 → 27.5 °C</td></tr>
+            <tr><td>Tree cover (EO)</td><td>1.1%</td></tr>
+          </tbody></table>
+          <div class="verdict worse">Verdict: Maladaptive. Canopy trapped heat, +3.9 points of heat-stress.</div>
+        </div>
+        <div class="rcard better">
+          <p class="rcity">Cork · open maritime fabric</p>
+          <table class="rtab"><tbody>
+            <tr><td>Heat-stress</td><td>0% → <b>0%</b></td></tr>
+            <tr><td>Mean UTCI</td><td>15.6 → 15.2 °C</td></tr>
+            <tr><td>Thermal-zone diversity</td><td><b>+7.6%</b></td></tr>
+          </tbody></table>
+          <div class="verdict better">Verdict: Regenerative. Cooler air and more thermal variety.</div>
+        </div>
       </div>
       <iframe class="embedbox" src="tool.html" title="Microclimate Probe tool" loading="lazy"></iframe>
       <p style="margin-top:12px">
@@ -494,7 +529,7 @@ var CELLS = [
         <a class="btn alt" href="index.html">Learning module</a></p>` },
 
   { id:"tools", addr:"E", coord:"[+3·M]", role:"Tools", region:"r-east",
-    glyph:"🧰", title:"The instruments", one:"infrared-sdk requests, sub-services & the cost guard.",
+    glyph:"🧰", title:"The instruments", one:"infrared-sdk requests, sub-services and the cost guard.",
     dh:"#a23b2e",
     body:`<h4>Model requests (infrared-sdk 0.4.9)</h4>
       <p><span class="pill">UtciModelRequest</span><span class="pill">WindModelRequest</span>
@@ -503,9 +538,9 @@ var CELLS = [
       <h4>Run model</h4>
       <div class="eq">client.<b>run_area_and_wait</b>(request, polygon, vegetation=…, on_progress=…)<br>
         → AreaResult( .merged_grid &nbsp;numpy, NaN outside polygon&nbsp;· .bounds · legend )</div>
-      <p><b>Submit-and-run</b>: billable. Grid resolution — wind 256 m, solar/thermal 512 m.</p>
+      <p><b>Submit-and-run</b>: billable. Grid resolution: wind 256 m, solar/thermal 512 m.</p>
       <h4>Free preview</h4>
-      <div class="eq">client.<b>preview_area</b>(polygon, analysis_type=…) &nbsp;— tiling only, <b>no jobs, no billing</b></div>
+      <div class="eq">client.<b>preview_area</b>(polygon, analysis_type=…) , tiling only, <b>no jobs, no billing</b></div>
       <h4>Sub-services</h4>
       <ul>
         <li><code>client.vegetation.get_area(polygon)</code> → real trees (<code>.features</code>, <code>.total_trees</code>)</li>
@@ -514,54 +549,54 @@ var CELLS = [
       <p><a class="btn" href="tool.html">Open the Probe controls ▸</a>
          <a class="btn alt" href="api-guide.html">Data &amp; API guide</a></p>` },
 
-  /* ---------------- BOTTOM ROW — special-case scenario ---------------- */
+  /* ---------------- BOTTOM ROW: special-case scenario ---------------- */
   { id:"counter", addr:"SW", coord:"[−3·S]", role:"Honest counter-case", region:"r-corner",
-    glyph:"🜂", title:"When trees backfire", one:"Marseille: heat-stress 79.1% → 83.0% — the canopy made it worse.",
+    glyph:"🜂", title:"When trees backfire", one:"Marseille: heat-stress 79.1% → 83.0%, the canopy made it worse.",
     dh:"#a23b2e",
-    body:`<div class="callout honest"><b>The honest finding — kept, not sanded off.</b>
+    body:`<div class="callout honest"><b>The honest finding, kept in full.</b>
       In an enlarged dense Marseille tile, adding canopy moved heat-stress
-      <b>79.1% → 83.0%</b> — the wrong direction.</div>
+      <b>79.1% → 83.0%</b>, the wrong direction.</div>
       <h4>Why a canyon backfires</h4>
       <ul>
-        <li><b>Radiant trapping</b> — canopy over a narrow canyon re-radiates long-wave heat downward instead of letting it escape to sky.</li>
-        <li><b>Lost ventilation</b> — crowns block the channelled airflow that was the canyon's one cooling mechanism.</li>
-        <li><b>Measurement artefact</b> — canopy masks grid cells, so baseline-vs-intervention % aren't strictly apples-to-apples.</li>
+        <li><b>Radiant trapping</b>: canopy over a narrow canyon re-radiates long-wave heat downward and stops it escaping to sky.</li>
+        <li><b>Lost ventilation</b>: crowns block the channelled airflow that was the canyon's one cooling mechanism.</li>
+        <li><b>Measurement artefact</b>: canopy masks grid cells, so the baseline and intervention percentages are not strictly comparable.</li>
       </ul>
-      <table><thead><tr><th>Marseille — enlarged</th><th>Value</th></tr></thead><tbody>
+      <table><thead><tr><th>Marseille, enlarged</th><th>Value</th></tr></thead><tbody>
         <tr><td>Heat-stress (base → +trees)</td><td class="worse">79.1% → 83.0% (worse)</td></tr>
         <tr><td>Mean UTCI</td><td>27.3 → 27.5 °C</td></tr>
         <tr><td>EO tree-cover</td><td>1.1%</td></tr>
       </tbody></table>
       <p class="callout honest">In the geo-game this is the <b>loss condition</b>: naive dense-canyon planting
-      returns a negative score — the "Maladaptive" verdict. The tension <i>is</i> the gameplay.</p>` },
+      returns a negative score, the "Maladaptive" verdict. The tension <i>is</i> the gameplay.</p>` },
 
   { id:"cases", addr:"S", coord:"[0·S]", role:"Special-case scenarios", region:"r-south",
-    glyph:"🏙", title:"Three cities", one:"Marseille · Cork · Rome — one honest finding, three climates.",
+    glyph:"🏙", title:"Three cities", one:"Marseille · Cork · Rome: one honest finding, three climates.",
     dh:"#b07a16",
     body:`<h4>The case studies (from kpis.json)</h4>
       <table><thead><tr><th>City</th><th>Heat-stress base → +trees</th><th>Headline</th></tr></thead><tbody>
-        <tr><td><b>Marseille</b></td><td class="worse">79.1% → 83.0%</td><td>Dense + Mediterranean — canopy backfires</td></tr>
-        <tr><td><b>Cork</b></td><td class="better">0% → 0%</td><td>Mild maritime — +7.6% thermal-zone diversity</td></tr>
-        <tr><td><b>Rome</b></td><td>96.9% → 97.6%</td><td>757 city trees / 33 species — provenance proof</td></tr>
+        <tr><td><b>Marseille</b></td><td class="worse">79.1% → 83.0%</td><td>Dense and Mediterranean, canopy backfires</td></tr>
+        <tr><td><b>Cork</b></td><td class="better">0% → 0%</td><td>Mild maritime, +7.6% thermal-zone diversity</td></tr>
+        <tr><td><b>Rome</b></td><td>96.9% → 97.6%</td><td>757 city trees / 33 species, provenance proof</td></tr>
       </tbody></table>
       <p>Rome injects <b>757 real street-trees across 33 species</b> from a 13,481-tree municipal register
-      (Municipio VIII) — a demonstration of <b>provenance</b>, not of a delta.</p>
+      (Municipio VIII): a demonstration of <b>provenance</b>, real named species, sourced and verifiable.</p>
       <h4>Open the scorecards</h4>
       <p><a class="btn" href="scorecard.html">Marseille</a>
          <a class="btn" href="scorecard_cork.html">Cork</a>
          <a class="btn" href="scorecard_rome.html">Rome</a>
          <a class="btn alt" href="timeseries.html">Diurnal time series</a></p>
-      <h4>The praxis — a geo-game</h4>
+      <h4>The praxis: a geo-game</h4>
       <p>The north star: a tree-surgeon, SimCity-like geo-game over real microclimate simulation.
       Place, grow and tend an urban forest; the honest finding is the core tension. Play is
       <b>choice-based</b> over pre-baked scenarios (no billable backend on the play path).</p>` },
 
   { id:"exemplar", addr:"SE", coord:"[+3·S]", role:"Exemplar", region:"r-corner",
-    glyph:"🌳", title:"Right species, right place", one:"Cork: +7.6% thermal-zone diversity at 0% heat-stress — the win.",
+    glyph:"🌳", title:"Right species, right place", one:"Cork: +7.6% thermal-zone diversity at 0% heat-stress, the win.",
     dh:"#1e6b3a",
     body:`<div class="callout win"><b>The exemplary win.</b> In maritime Cork, well-placed canopy held
-      heat-stress at <b>0%</b> while lifting <b>thermal-zone diversity +7.6%</b> — a richer, more navigable microclimate.</div>
-      <h4>Cork — Nano Nagle Place</h4>
+      heat-stress at <b>0%</b> while lifting <b>thermal-zone diversity +7.6%</b>, a richer, more navigable microclimate.</div>
+      <h4>Cork: Nano Nagle Place</h4>
       <table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>
         <tr><td>Heat-stress (base → +trees)</td><td class="better">0% → 0%</td></tr>
         <tr><td>Mean UTCI</td><td>15.6 → 15.2 °C (cooler)</td></tr>
@@ -571,7 +606,7 @@ var CELLS = [
       <h4>The skill being modelled</h4>
       <p>The exemplar and the counter-case (SW) are the same move with different <i>placement</i>:
       open fabric + maritime air rewards canopy; dense canyon + Mediterranean radiance punishes it.
-      In the geo-game this is the <b>win condition</b> — mastery = matching species &amp; density to the street's geometry and climate.</p>
+      In the geo-game this is the <b>win condition</b>: mastery is matching species and density to the street's geometry and climate.</p>
       <p><a class="btn" href="scorecard_cork.html">Open the Cork scorecard ▸</a></p>` }
 ];
 
@@ -614,27 +649,27 @@ buildRuler(document.getElementById("ruler-bot"));
 
 /* plain-language gloss per cell (Viktor: terms read as abstract cold) */
 var PLAIN={
-  lineage:"Where this layout comes from — and why position means something.",
+  lineage:"Where this layout comes from, and why position means something.",
   principles:"The one big idea: trees don't always cool a street.",
   recipe:"How to run this yourself, step by step.",
   definitions:"The words you'll meet here, in plain English.",
-  probe:"The live tool — this is the bit you actually do.",
+  probe:"The live tool. This is the bit you actually do.",
   tools:"The buttons and knobs under the hood.",
-  counter:"When planting backfires — the honest, awkward result.",
+  counter:"When planting backfires, the honest, awkward result.",
   cases:"Three real cities, three different outcomes.",
-  exemplar:"When planting works — and what made the difference."
+  exemplar:"When planting works, and what made the difference."
 };
 
 /* the guided pathway = a learning order through the cells (the jitterbug:
-   the equilibrium set in motion). Not the spatial reading order — a 2-min arc:
+   the equilibrium set in motion). Not the spatial reading order. A 2-min arc:
    idea -> real cases -> honest fail -> the win -> DO it -> make your own. */
 var PATH=[
-  {id:"principles",t:"<b>The big idea.</b> Adding trees isn't automatically cooling — where and how you plant decides whether a street gets cooler or hotter."},
-  {id:"cases",     t:"<b>Real cities.</b> See it play out in three climates — Marseille, Cork, Rome — each with a different result."},
-  {id:"counter",   t:"<b>The honest fail.</b> In a dense Marseille canyon the trees made it <i>worse</i>. We kept that finding instead of hiding it."},
+  {id:"principles",t:"<b>The big idea.</b> Whether trees cool a street or heat it depends on where and how you plant them."},
+  {id:"cases",     t:"<b>Real cities.</b> See it play out in three climates: Marseille, Cork, Rome, each with a different result."},
+  {id:"counter",   t:"<b>The honest fail.</b> In a dense Marseille canyon the trees made it <i>worse</i>. We kept that finding in plain sight."},
   {id:"exemplar",  t:"<b>The win.</b> In open, maritime Cork the same move cooled the street and added variety. Placement is the whole skill."},
   {id:"probe",     t:"<b>Now you do it.</b> Set a place, a scenario and a time → get a heat map, a heat-stress %, and a verdict. That's the input → output loop."},
-  {id:"recipe",    t:"<b>Make your own.</b> Reproduce it for any city — preview free first, then run a real simulation."}
+  {id:"recipe",    t:"<b>Make your own.</b> Reproduce it for any city: preview free first, then run a real simulation."}
 ];
 var COORD={NW:[1,1],N:[3,1],NE:[5,1],W:[1,3],C:[3,3],E:[5,3],SW:[1,5],S:[3,5],SE:[5,5]};
 
