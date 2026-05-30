@@ -1,0 +1,350 @@
+# The Data & API Guide — Regenerative Microclimate Probe
+
+**AT6012 × infrared.city Buildathon 2026 · CCAE / UCC School of Architecture**
+
+> **Who this is for.** Everyone — from "I've never made an API key" to "just tell me the
+> endpoint." Every section has a **🟢 Novice path** (the one obvious correct choice, with
+> reasons) and a **🟣 Power-user note** (the full menu and when to deviate). If you only read
+> the bold **TL;DR** line in each section, you'll still pick correctly.
+
+---
+
+## 0. The one rule that decides everything
+
+This project keeps **every key server-side** in a gitignored `.env`, read by a Python backend
+(`server.py` + the scripts). **The browser never receives a key.**
+
+```mermaid
+flowchart LR
+    ENV[".env (gitignored)<br/>your secret keys"] --> PY["Python backend<br/>server.py + scripts"]
+    PY -->|"results only<br/>numbers, images"| BROWSER["Browser / static pages<br/>tool.html"]
+    BROWSER -. "never sees a key" .-> ENV
+    style ENV fill:#2d3748,color:#fff
+    style PY fill:#2b6cb0,color:#fff
+    style BROWSER fill:#2f855a,color:#fff
+```
+
+**Consequence:** wherever a service offers a "server-side / full-access" key *and* a
+"browser-safe / restricted" key, **you always want the server-side one.** That single fact
+resolves the Roboflow confusion below and most others. <abbr title="A secret credential meant to stay on a server you control. Treat it like a password.">Server-side keys</abbr>
+are safe here because they live only in `.env`.
+
+---
+
+## 1. Do I even need all these keys? (60-second triage)
+
+You do **not** need every key to get a working result. Start keyless, add credentials only when
+you need what they unlock.
+
+```mermaid
+flowchart TD
+    START(["I want to analyse a place"]) --> Q1{"Run UTCI / wind / solar?"}
+    Q1 -->|yes| IR["infrared.city key<br/>INFRARED_API_KEY — required"]
+    Q1 -->|"no, just vegetation context"| Q2
+    IR --> Q2{"Need land-cover /<br/>tree-cover %?"}
+    Q2 -->|yes| WC["ESA WorldCover<br/>KEYLESS — start here"]
+    Q2 --> Q3{"Need a vegetation NDVI<br/>freshness number?"}
+    Q3 -->|yes| SH["Copernicus / Sentinel Hub<br/>SH_CLIENT_ID + SECRET"]
+    Q3 -->|no| Q4
+    Q4{"Need to detect tree<br/>canopy from imagery?"} -->|yes| RF["Roboflow<br/>ROBOFLOW_API_KEY + MODEL"]
+    Q4 -->|no| Q5
+    Q5{"Need real per-tree species,<br/>size, condition, growth?"} -->|yes| GUS["GUS.earth<br/>GUS_API_KEY"]
+    Q5 -->|no| DONE(["Done — keyless is enough"])
+    style WC fill:#2f855a,color:#fff
+    style IR fill:#2b6cb0,color:#fff
+    style DONE fill:#2f855a,color:#fff
+```
+
+**The enrichment ladder** — each rung adds fidelity, and costs a little more onboarding:
+
+| Rung | Source | Key? | What it gives you |
+|---|---|---|---|
+| 0 | **City open data** (Rome WFS, Marseille ODS, Cork CKAN) | 🟢 keyless | Real street-tree registers, *with species* (Rome) |
+| 0 | **ESA WorldCover** (10 m land-cover) | 🟢 keyless | Tree-cover %, built-up %, the WorldCover overlay |
+| 1 | **infrared.city SDK** | required | The actual UTCI / wind / solar physics |
+| 2 | **Sentinel-2 NDVI** (Copernicus) | 🔑 OAuth | Live vegetation vigour for any bbox |
+| 2 | **Roboflow** canopy CV | 🔑 key | Tree canopy detected from aerial imagery |
+| 3 | **GUS.earth** (gAIa) | 🔑 key | Per-tree species, DBH, condition, growth forecasts |
+
+> **Why "API-first / keyless-first"?** It means anyone can clone the repo and get real results
+> with *zero* account setup, then opt into credentials only for the fidelity they actually need.
+
+---
+
+## 2. infrared.city SDK — the engine (one key, `INFRARED_API_KEY`)
+
+**TL;DR:** one key, no key-type choice. The real discipline is **`preview_area` is free,
+`run_area_and_wait` is billable.** Preview first, always.
+
+### 🟢 Novice path
+1. Get a key at **infrared.city → account → API keys**.
+2. Put it in `.env`:  `INFRARED_API_KEY=your-key-here`
+3. `python verify_setup.py` confirms it loads.
+4. `python scorecard.py` (no `--run`) → **previews tiling only, spends nothing.**
+5. Only when you're ready: `python scorecard.py --run --site cork --max-tiles 1`.
+
+> **`preview_area` vs `run_area_and_wait`** — preview *tiles* your area and reports
+> `tile_count` / `estimated_time` / `estimated_cost` with **no jobs and no billing**.
+> `run_area_and_wait` submits **billable** jobs and blocks until results return an
+> <abbr title="A NumPy array of values across the area, NaN outside your polygon. The raw output you score.">`AreaResult.merged_grid`</abbr>.
+
+### The analysis menu — which model do I pick?
+
+| Request | Computes | Pick it when |
+|---|---|---|
+| `UtciModelRequest` | <abbr title="Universal Thermal Climate Index — a composite 'feels-like' outdoor comfort temperature combining air temp, humidity, wind and radiation.">UTCI</abbr> — outdoor thermal comfort | The headline "how does it *feel*" metric — the probe's core |
+| `WindModelRequest` | Steady-state wind field | Ventilation, street-canyon flow |
+| `PwcModelRequest` | <abbr title="Pedestrian Wind Comfort — classifies wind into comfort/safety categories, e.g. Lawson criteria.">Pedestrian Wind Comfort</abbr> classes | Wind *comfort/safety* categories, not raw velocity |
+| `SolarModelRequest` | Daylight / direct sun hours (geometry) | Shading and sun-hours studies |
+| `SolarRadiationModelRequest` | Cumulative solar <abbr title="Energy received per unit area — the heat-load input, using weather data.">irradiance</abbr> | Energy load, radiant heat input |
+| `SvfModelRequest` | <abbr title="Sky View Factor — fraction of sky visible from a point. Geometry only, no weather needed. A cheap proxy for radiative openness.">Sky View Factor</abbr> | A cheap, weather-free openness proxy |
+
+### Tile sizes (why your cost estimate is what it is)
+- **Wind** simulates on a **256 m** grid (50% overlap, centre-crop merge).
+- **Solar / thermal** simulate on **512 m** tiles (edge-to-edge).
+- More area → more tiles → more billable jobs. `--max-tiles N` is your seatbelt.
+
+### 🟣 Power-user note
+Sub-services you'll reach for: `client.vegetation.get_area(polygon)` (real OSM trees — but see
+**the gap** below), `client.weather.get_weather_file_from_location(lat=, lon=)` (nearest
+<abbr title="EnergyPlus Weather file — hourly typical-year climate data for a location.">EPW</abbr>
+station). UTCI needs **both** geometry *and* weather: inject buildings into baseline *and*
+intervention scenarios, and supply the weather arrays, or you'll hit
+`400: "At least one of [geometries, vegetation] must contain geometry data"`. A `TimePeriod`
+can't be zero-length — a single hour is `[h, h+1]`, not `[h, h]`.
+
+> **The gap this whole project exists for:** `client.vegetation.get_area()` returns OSM tree
+> points whose `species`, `height`, `diameter_crown`, `leaf_type` are all **`null`**. You know
+> *where* trees are, not *what* they are. Sections 3–6 fill that gap.
+
+📚 [infrared-sdk on PyPI](https://pypi.org/project/infrared-sdk/) ·
+[Available Models](https://infrared.city/knowledge-base/available-models/) ·
+[Simulation Engine Basics](https://infrared.city/knowledge-base/simulation-engine-basics/)
+
+---
+
+## 3. Roboflow — Private vs Publishable key (the one that trips everyone)
+
+**TL;DR: pick the `Private API Key`.** It authenticates the Platform APIs and Roboflow
+Inference that your Python backend calls. The Publishable key is *only* for in-browser
+inference (`inferencejs`) — and you have no browser inference, so it would simply fail.
+
+```mermaid
+flowchart TD
+    Q{"Where does inference run?"} -->|"On my server<br/>Python: inference / get_model"| PRIV["Private API Key<br/>full workspace access<br/>ROBOFLOW_API_KEY"]
+    Q -->|"In the visitor's browser<br/>JavaScript: inferencejs"| PUB["Publishable API Key<br/>browser-safe, restricted"]
+    PRIV --> THIS["THIS PROJECT ✅"]
+    style PRIV fill:#2f855a,color:#fff
+    style THIS fill:#2f855a,color:#fff
+    style PUB fill:#4a5568,color:#fff
+```
+
+| | **Private API Key** ✅ | Publishable API Key |
+|---|---|---|
+| Used by | Roboflow Platform APIs + **Roboflow Inference** (Python) | `inferencejs` (browser SDK) |
+| Access | **Full workspace** — your data, your private models | Restricted, browser-safe subset |
+| Trust model | Secret — treat like a password, server-side only | Designed to be *exposed* in client JS |
+| This project | **YES** — Python backend, key in `.env` | No — we never ship a key to the client |
+
+### 🟢 Novice path
+1. Sign up free at **roboflow.com** (no card).
+2. **Workspace Settings → API Keys** → copy the **Private API Key**.
+3. `.env`:  `ROBOFLOW_API_KEY=...`
+4. If a key leaks, **Roll API Key** (regenerates it).
+
+### Choosing a model — what `ROBOFLOW_MODEL` means
+`ROBOFLOW_MODEL` is `project-id/version-number`, e.g. `trees/3` = *version 3 of the `trees`
+project*. (You retrain a project many times; each train is a new version.)
+
+To find a tree-canopy model:
+1. Browse **[Roboflow Universe](https://universe.roboflow.com/search?q=class:tree)** — filter `class:tree`.
+2. Open a model page; the URL tail `.../<project>/model/<version>` is your exact `project/version` string.
+3. **Detection vs segmentation** — pick the right tool:
+
+| Model type | Output | Use for |
+|---|---|---|
+| Object **detection** | Bounding boxes | Tree *counts* and locations |
+| **Segmentation** | Pixel masks | Canopy *cover fraction* (area) — usually what you want |
+
+> **Match the imagery.** Pick a model trained on **top-down aerial/satellite** tiles if that's
+> what you feed it — a model trained on street-level photos won't generalise to overhead tiles.
+
+Real candidates confirmed on Universe: `tree-canop/detecting-tree-canopy`,
+`trial-fz7iy/canopy-segmentation-fqstt`, `tree-detection-h9dcy/tree-detection-ekaot`.
+
+### 🟣 Power-user note
+The Publishable key only earns its place if you later add an **in-browser** preview that runs
+`inferencejs` client-side (offloading inference to the visitor's device). Keys are
+*workspace-scoped*: a model in another workspace needs that workspace's key.
+
+📚 [Find your API key](https://docs.roboflow.com/developer/authentication/find-your-roboflow-api-key) ·
+[Inference: configure key](https://inference.roboflow.com/quickstart/configure_api_key/)
+
+---
+
+## 4. Copernicus / Sentinel Hub — which API for NDVI? (the "sweet spot")
+
+The confusion is real: the Copernicus Data Space Ecosystem offers *several* ways in. Here's the
+whole menu and the one you want.
+
+**TL;DR: use the Sentinel Hub `Statistical API`** to get the NDVI *number* for your bbox
+(JSON, no image download). Use the **`Process API`** only if you need the NDVI *raster image*.
+Both authenticate with the same **OAuth2 client-credentials** (`SH_CLIENT_ID`/`SH_CLIENT_SECRET`).
+
+```mermaid
+flowchart TD
+    Q{"What do I want back?"} -->|"A NUMBER<br/>mean NDVI of this block"| STAT["Statistical API<br/>JSON stats, no pixels"]
+    Q -->|"An IMAGE<br/>NDVI raster to overlay"| PROC["Process API<br/>GeoTIFF/PNG via evalscript"]
+    Q -->|"Which scenes exist?<br/>dates, cloud cover"| CAT["Catalog API<br/>pre-flight search"]
+    Q -->|"Portable, multi-date,<br/>batch process graphs"| OEO["openEO<br/>power-user"]
+    Q -->|"Bulk file download<br/>or archival"| ODATA["OData Catalogue<br/>overkill here"]
+    style STAT fill:#2f855a,color:#fff
+```
+
+| API | Best for | NDVI fit |
+|---|---|---|
+| **Statistical API** | Aggregated stats (mean, stdev, histogram) per AOI per time, as **JSON** | **★ Sweet spot** — "what's the NDVI of this block?" |
+| **Process API** | Synchronous custom processing → **imagery** via an <abbr title="A small JavaScript snippet you POST that tells Sentinel Hub how to turn raw bands into your output, e.g. (B8−B4)/(B8+B4) for NDVI.">evalscript</abbr> | When you need the NDVI raster |
+| **Catalog API** | Search which scenes exist before processing | Pre-flight only |
+| **openEO** | Standardised, backend-portable process graphs (Py/R/JS) | Power-user time-series / batch |
+| **OData Catalogue** | Product search + whole-file download + subscriptions | Bulk/archival, too heavy here |
+| **Direct S3 / OGC** | Stream raw files / WMS/WCS map services | Niche |
+
+> **Why Statistical, concretely:** your AOI is a *small urban bbox* and you want a vegetation
+> *number* to feed the climate model — not gigabytes of pixels. Statistical returns the
+> aggregated NDVI directly as JSON, skipping image download and post-processing entirely.
+
+### 🟢 Novice path — create the OAuth client
+<abbr title="NDVI = Normalized Difference Vegetation Index = (NIR − Red)/(NIR + Red). ~0 is bare/built, ~0.8 is lush vegetation. A standard greenness/vigour measure.">**NDVI**</abbr>
+needs two credentials, obtained once:
+
+1. Register at **dataspace.copernicus.eu**, confirm your email.
+2. Open the **Sentinel Hub Dashboard → User Settings → OAuth clients → Create**.
+3. Name it; leave **SPA off** (this is server-side, not a single-page app). "Never expire" is allowed.
+4. Copy the **Client ID** and the **Client Secret** — *the secret is shown once*. Into `.env`:
+   `SH_CLIENT_ID=...` and `SH_CLIENT_SECRET=...`
+
+### How the token exchange works (so it's not magic)
+```mermaid
+sequenceDiagram
+    participant App as Python backend
+    participant Auth as Copernicus identity server
+    participant SH as Sentinel Hub API
+    App->>Auth: POST grant_type=client_credentials<br/>+ client_id + client_secret
+    Auth-->>App: JWT access token (expires in N sec)
+    App->>SH: POST Statistical/Process<br/>Authorization: Bearer token
+    SH-->>App: NDVI (JSON stats or raster)
+    Note over App: reuse the token until it expires<br/>(token requests are rate-limited)
+```
+Token endpoint: `https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token`.
+In Python, `sentinelhub-py` or `requests-oauthlib`'s `BackendApplicationClient` runs this loop
+for you.
+
+### 🟣 Power-user note
+Reach for **openEO** when you want a portable, declarative process graph, a multi-temporal NDVI
+*series*, or batch jobs you might move between backends. For a single small-bbox lookup it's
+heavier ceremony than Statistical.
+
+📚 [CDSE APIs overview](https://documentation.dataspace.copernicus.eu/APIs.html) ·
+[SH Authentication](https://documentation.dataspace.copernicus.eu/APIs/SentinelHub/Overview/Authentication.html) ·
+[Statistical API](https://documentation.dataspace.copernicus.eu/APIs/SentinelHub/Statistical.html)
+
+---
+
+## 5. ESA WorldCover — the keyless default (no `.env` entry at all)
+
+**TL;DR: no key, no account, nothing.** Access the Microsoft **Planetary Computer STAC API**
+anonymously and pull ESA WorldCover 10 m land-cover — including a *Tree cover* class.
+
+### 🟢 Novice path
+```python
+import city_data as cd
+cd.eo_worldcover((12.485, 41.841, 12.495, 41.849))   # bbox → land-cover %; keyless
+```
+That's it — this is why it's the **first** rung you wire up. It already powers the geo-referenced
+WorldCover overlay in `tool.html`.
+
+> **<abbr title="SpatioTemporal Asset Catalog — a standard JSON API for searching satellite/geo datasets by area, time, and type.">STAC</abbr>** at
+> `https://planetarycomputer.microsoft.com/api/stac/v1` is free and anonymous. The
+> `planetary_computer.sign()` step is a *request-audit* step, **not authentication** — you don't
+> need an account to get a signed URL. A `PC_SDK_SUBSCRIPTION_KEY` is optional and only raises rate limits.
+
+### 🟣 Power-user note
+ESA WorldCover is a single epoch (2020/2021) at 10 m — great for a *coarse* canopy/built-up
+baseline. When you need *current* vigour, layer Sentinel-2 NDVI (§4) on top; when you need *per
+tree* detail, go to GUS.earth (§6).
+
+📚 [ESA WorldCover on Planetary Computer](https://planetarycomputer.microsoft.com/dataset/esa-worldcover) ·
+[Reading from the STAC API](https://planetarycomputer.microsoft.com/docs/quickstarts/reading-stac/)
+
+---
+
+## 6. GUS.earth (gAIa) — per-tree intelligence (`GUS_API_KEY`)
+
+**TL;DR: send `GUS_API_KEY` as an API-key header.** Turn it on only when you need *per-tree*
+attributes — species, <abbr title="Diameter at Breast Height — standard trunk-size measure for trees, ~1.3 m up.">DBH</abbr>,
+crown size, condition, age — or growth/ecosystem-service forecasts the SDK's OSM points can't give.
+
+GUS.earth ("Green Unified Scenarios") is an **Urban Forest Intelligence Platform**: a per-tree
+database + simulation API. Confirmed endpoints (`/api/v1/gus/`) include `GET /trees`,
+`POST /trees/filter` (by species/height/DBH/condition/age), `GET /trees/{id}/nearby`, plus
+**Populations** and **Simulations** (carbon sequestration, avoided runoff, air-quality forecasts).
+
+### 🟢 Novice path
+1. Sign up at **gaia.gus.earth**; obtain an API key.
+2. `.env`:  `GUS_API_KEY=...`  (and `GUS_API_BASE` if your account uses a non-default host).
+3. The connector sends it as an `APIKeyHeader`. Live API docs: `backend.gus.earth/docs` (Swagger).
+
+> **Why it's the top rung:** this is the only source that answers *"what tree, how big, how
+> healthy, and how will it grow?"* — exactly the data a realistic "is this intervention
+> regenerative?" judgement (and the future tree-surgeon game) needs. It's optional for a first
+> canopy-presence pass.
+
+📚 [gAIa](https://gaia.gus.earth/) · `https://backend.gus.earth/docs`
+
+---
+
+## 7. One-screen cheat sheet
+
+| Source | Pick | `.env` var(s) | Key? | Why |
+|---|---|---|---|---|
+| **infrared.city** | one key; **preview first** | `INFRARED_API_KEY` | required | `preview_area` free; `run_area_and_wait` billable |
+| **Roboflow** | **Private** API Key | `ROBOFLOW_API_KEY`, `ROBOFLOW_MODEL` | 🔑 | Server-side inference; Publishable is browser-only |
+| **Copernicus** | Sentinel Hub **Statistical API** | `SH_CLIENT_ID`, `SH_CLIENT_SECRET` | 🔑 OAuth | Aggregated NDVI as JSON for a small bbox |
+| **GUS.earth** | API-key header | `GUS_API_KEY` | 🔑 | Per-tree species/DBH/condition + forecasts |
+| **ESA WorldCover** | keyless STAC | — | 🟢 none | Zero-friction land/tree-cover baseline |
+| **City open data** | keyless connectors | — | 🟢 none | Real registers; Rome has species |
+
+---
+
+## 8. Tooltip glossary (hover the dotted terms above, or read here)
+
+| Term | Plain-English meaning |
+|---|---|
+| **UTCI** | Universal Thermal Climate Index — a "feels-like" outdoor comfort temperature combining air temp, humidity, wind, and radiation. |
+| **NDVI** | (NIR − Red)/(NIR + Red). ~0 = bare/built, ~0.8 = lush. Standard satellite greenness/vigour measure. |
+| **SVF** | Sky View Factor — how much open sky a point can "see" (0–1). Geometry-only proxy for radiative exposure. |
+| **PWC** | Pedestrian Wind Comfort — wind sorted into comfort/safety classes (e.g. Lawson criteria). |
+| **STAC** | SpatioTemporal Asset Catalog — a standard JSON API to search geo/satellite data by area, time, type. |
+| **OAuth2 client-credentials** | A machine-to-machine login: swap a client ID+secret for a short-lived access token, then call the API with it. |
+| **evalscript** | A small JS snippet you POST to Sentinel Hub telling it how to turn raw bands into your output (e.g. NDVI). |
+| **DBH** | Diameter at Breast Height — standard trunk-size measure (~1.3 m up the trunk). |
+| **EPW** | EnergyPlus Weather file — hourly typical-year climate data for a location. |
+| **merged_grid** | The infrared SDK's output: a NumPy array of values across your area (NaN outside the polygon). |
+| **Private vs Publishable key** | Private = secret, full server-side access. Publishable = safe to expose in browser JS, restricted. |
+| **Detection vs segmentation** | Detection = bounding boxes (counts). Segmentation = pixel masks (area/coverage fraction). |
+
+---
+
+## 9. Security — the non-negotiables
+
+- **Never commit `.env`** or hardcode a key. It's gitignored — keep it that way. This repo is public; double-check before every push.
+- Keys live **server-side only**; static pages/`tool.html` never receive them (they call your backend, which holds the key).
+- **Rotate any key that is ever exposed** (Roboflow "Roll API Key"; regenerate SH OAuth client; new infrared key).
+- Editing displayed KPI numbers? That's data, not secrets → `output/kpis.json`.
+
+---
+
+*Sources verified May 2026. Companion to [`SETUP.md`](../SETUP.md) (account-by-account walkthrough)
+and [`README.md`](../README.md). The next step is an interactive, tooltip-driven onboarding
+wizard built from this guide — see the project's geo-game roadmap.*
